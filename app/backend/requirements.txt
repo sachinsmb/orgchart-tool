@@ -1,0 +1,7 @@
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+asyncpg==0.30.*
+pydantic==2.*
+python-jose[cryptography]==3.*   # JWT
+passlib[bcrypt]==1.7.*           # password hashing
+bcrypt==4.0.1                    # pin <4.1: passlib 1.7.4's wrap-bug self-check breaks on bcrypt>=4.1

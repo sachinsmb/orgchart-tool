@@ -1,0 +1,2873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACME MEP — Org Assessment</title>
+<script>try{var _t=localStorage.getItem('cb-theme'); if(_t) document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<!-- html2canvas vendored locally (no external CDN → no supply-chain risk, works offline) -->
+<script src="vendor/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#273449; --line:#334155;
+    --text:#e2e8f0; --muted:#94a3b8; --accent:#6366f1;
+    --dot:#1e293b; --chip-bg:#3f2d1a; --chip-text:#fbbf24; --shadow:rgba(0,0,0,.45);
+    --banner-bg:#3f2d1a; --banner-text:#fde68a; --banner-border:#a16207;
+  }
+  :root[data-theme="light"]{
+    --bg:#eef2f7; --panel:#ffffff; --panel2:#f1f5f9; --line:#d8e0ea;
+    --text:#0f172a; --muted:#64748b; --accent:#6366f1;
+    --dot:#dbe2ea; --chip-bg:#fef3c7; --chip-text:#b45309; --shadow:rgba(15,23,42,.14);
+    --banner-bg:#fef3c7; --banner-text:#92400e; --banner-border:#fcd34d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;transition:background .2s,color .2s}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:8px;padding:8px 11px;font-size:13px;font-weight:600;background:var(--panel2);color:var(--text)}
+  button:hover{filter:brightness(1.12)}
+  .btn-accent{background:var(--accent);color:#fff}
+  .btn-danger{background:#7f1d1d;color:#fecaca}
+  input,textarea,select{font-family:inherit;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 11px;font-size:13px;width:100%}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);border-color:transparent}
+  .sep{width:1px;height:26px;background:var(--line);margin:0 2px}
+
+  /* ---------- Login ---------- */
+  #login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+  #login .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:34px;width:340px;box-shadow:0 20px 60px var(--shadow)}
+  #login h1{font-size:20px;margin-bottom:4px}
+  #login p{color:var(--muted);font-size:13px;margin-bottom:20px}
+  #login label{display:block;font-size:12px;color:var(--muted);margin:12px 0 6px}
+  #login .err{color:#ef4444;font-size:12px;margin-top:10px;min-height:16px}
+
+  /* ---------- Shell ---------- */
+  /* One row, read left to right: who you are · what you are looking at · find · make · view ·
+     is it saved · you. Buttons are grouped by job with hairline separators, so the eye lands on
+     a group rather than scanning fourteen equal-weight controls. Nothing wraps. */
+  header{position:fixed;top:0;left:0;right:0;height:56px;background:var(--panel);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:6px;padding:0 12px;z-index:40}
+  header button{white-space:nowrap;flex-shrink:0}
+  .brand{display:flex;align-items:center;gap:9px;flex-shrink:0;padding-right:2px}
+  .brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#7c5cff);
+    color:#fff;font-weight:800;font-size:11.5px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .brand-txt{display:flex;flex-direction:column;line-height:1.15}
+  .brand-txt b{font-size:13.5px;font-weight:700;white-space:nowrap}
+  .brand-txt span{font-size:10px;color:var(--muted);white-space:nowrap}
+  header select.board-sel{max-width:190px;font-weight:600}
+  .stats{display:flex;gap:3px;flex-wrap:nowrap;flex-shrink:0}
+  .pill{display:flex;align-items:center;gap:5px;background:var(--panel2);border-radius:20px;padding:4px 9px;
+    font-size:11px;font-weight:600;white-space:nowrap;border:1px solid transparent;min-width:0}
+  .pill.clickable{cursor:pointer}
+  .pill.clickable:hover{border-color:var(--line)}
+  .pill.on{border-color:var(--accent);background:var(--panel)}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .spacer{flex:1}
+  .findgroup{display:flex;gap:5px;min-width:0}
+  header input.search{width:170px;min-width:110px}
+  header select.filter{width:118px}
+  /* account */
+  .acct-btn{display:flex;align-items:center;gap:7px;padding:4px 8px 4px 4px}
+  .avatar{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .avatar.lg{width:34px;height:34px;font-size:14px}
+  .acct-name{font-size:12px;font-weight:600;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acct-btn .caret{font-size:9px;color:var(--muted)}
+  .acct-head{display:flex;align-items:center;gap:10px;padding:10px 10px 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .acct-head b{display:block;font-size:13px}
+  .acct-head span{display:block;font-size:10.5px;color:var(--muted)}
+  #acct-r{margin-top:3px;display:inline-block !important;background:var(--panel2);border-radius:5px;padding:1px 6px;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px}
+  .zoom{display:flex;gap:3px;align-items:center}
+  .zoom button{width:32px;padding:8px 0}
+  .who{font-size:12px;color:var(--muted);white-space:nowrap}
+  .syncdot{font-size:12px;padding:5px 8px;border-radius:7px;cursor:default;user-select:none;line-height:1}
+  .syncdot.ok{color:#22c55e}
+  .syncdot.busy{color:var(--muted)}
+  .syncdot.off{color:var(--muted)}
+  .syncdot.err{color:#fecaca;background:#7f1d1d;font-weight:700;cursor:pointer;padding:5px 10px}
+  .menu{position:absolute;right:0;top:42px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;z-index:60;min-width:210px;max-height:82vh;overflow-y:auto;box-shadow:0 8px 24px var(--shadow);display:flex;flex-direction:column;gap:1px}
+  .menu button{background:transparent;text-align:left;width:100%;padding:7px 10px}
+  .menu button:hover{background:var(--panel2)}
+  .menu button.btn-accent{background:var(--accent);color:#fff}
+  .menu-h{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:9px 10px 3px;font-weight:700}
+
+  /* ---------- Canvas / pan-zoom ---------- */
+  #canvas{position:absolute;top:56px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab;touch-action:none;
+    background:radial-gradient(circle at 1px 1px,var(--dot) 1px,transparent 0);background-size:26px 26px}
+  #canvas.grabbing{cursor:grabbing}
+  #canvas.connect-mode .node,#canvas.connect-mode .freebox{cursor:crosshair}
+  #connect-hint{position:absolute;left:50%;transform:translateX(-50%);top:66px;z-index:40;display:none;
+    background:var(--accent);color:#fff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;
+    box-shadow:0 3px 12px var(--shadow)}
+  /* On-canvas key. Every mark the chart can draw, explained where you are looking —
+     the legend modal only ever covered colours and tags (2 of 9 marks). */
+  #maplegend{position:absolute;left:14px;bottom:14px;z-index:45;width:262px;max-height:calc(100% - 90px);
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 22px var(--shadow);
+    font-size:11px;display:none;flex-direction:column;overflow:hidden}
+  #maplegend.on{display:flex}
+  #maplegend .lg-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;
+    border-bottom:1px solid var(--line);cursor:pointer;user-select:none;font-weight:700;font-size:12px}
+  #maplegend .lg-head span{color:var(--muted);font-weight:500;font-size:10px}
+  #maplegend .lg-body{overflow:auto;padding:4px 10px 10px}
+  #maplegend.min .lg-body{display:none}
+  #maplegend h5{margin:10px 0 5px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  #maplegend .lgi{display:flex;align-items:flex-start;gap:8px;padding:3px 0;line-height:1.35}
+  #maplegend .lgi .k{flex:0 0 62px;display:flex;align-items:center;justify-content:flex-start;min-height:17px}
+  #maplegend .lgi .v b{display:block}
+  #maplegend .lgi .v i{font-style:normal;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;
+    -webkit-box-orient:vertical;overflow:hidden}
+  #maplegend .lgi:hover .v i{-webkit-line-clamp:unset}
+  #maplegend .cnt2{margin-left:auto;color:var(--muted);flex:0 0 auto;padding-left:6px}
+  #maplegend .swz{width:34px;height:15px;border-radius:4px;border-left:3px solid}
+  #maplegend .lgi.can{cursor:pointer;border-radius:6px;margin:0 -6px;padding-left:6px;padding-right:6px}
+  #maplegend .lgi.can:hover{background:var(--panel2)}
+  #maplegend .lgi.on{background:var(--panel2);box-shadow:inset 2px 0 0 var(--accent)}
+  #maplegend .lg-body{overscroll-behavior:contain}
+  #maplegend h5.warn{color:#f59e0b}
+  #maplegend .lgi.gap .v b{color:var(--text)}
+  #maplegend .chip.warnchip{background:#f59e0b;color:#3a2a05;font-weight:800;min-width:17px;text-align:center}
+  #maplegend .chip.okchip{background:#22c55e;color:#052e12;font-weight:800;min-width:17px;text-align:center}
+  #viewport{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+  #edges{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
+  #edges path{stroke:var(--line);stroke-width:2;fill:none}
+  #nodes{position:absolute;top:0;left:0}
+  #edges path.orgedge{stroke:var(--line);stroke-width:1.5;fill:none;pointer-events:none}
+  #edges path.orgedge.sel{stroke:var(--accent);stroke-width:2.5}
+  #edges path.link{stroke:var(--accent);stroke-width:2;fill:none;pointer-events:none}
+  #edges path.linkhit{stroke:transparent;stroke-width:16;fill:none;pointer-events:stroke;cursor:grab}
+  #edges path.linkhit:active{cursor:grabbing}
+  #edges circle.bendh{fill:var(--panel);stroke:var(--accent);stroke-width:2.5;cursor:grab;pointer-events:all}
+  #edges circle.endh{fill:#22c55e;stroke:var(--panel);stroke-width:2;cursor:crosshair;pointer-events:all}
+  #edges circle.endh:hover{r:8}
+  #edges path.tail{pointer-events:none}
+  #edges path.link.comm{stroke-linecap:round}
+  #edges circle.bendh:hover{r:8}
+  #edges path.link.sel{stroke:#22c55e;stroke-width:3.5}
+  #edges marker path{fill:context-stroke}   /* arrow takes the colour of its own line */
+  .freebox{position:absolute;background:var(--panel2);border:1px dashed var(--accent);border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.4;color:var(--text);cursor:grab;user-select:none;box-shadow:0 4px 14px var(--shadow)}
+  .freebox.selbox{box-shadow:0 0 0 2px var(--accent),0 4px 14px var(--shadow)}
+  .freebox.conn-src,.node.conn-src{box-shadow:0 0 0 2px #22c55e}
+  .conn-handle{position:absolute;width:13px;height:13px;border-radius:50%;background:var(--accent);
+    border:2px solid var(--panel);cursor:crosshair;display:none;z-index:6;box-shadow:0 1px 4px var(--shadow)}
+  .conn-handle.t{top:-7px;left:50%;margin-left:-6px}
+  .conn-handle.b{bottom:-7px;left:50%;margin-left:-6px}
+  .conn-handle.l{left:-7px;top:50%;margin-top:-6px}
+  .conn-handle.r{right:-7px;top:50%;margin-top:-6px}
+  .node:hover .conn-handle,.freebox:hover .conn-handle{display:block}
+  .conn-handle:hover{background:#22c55e;width:17px;height:17px;margin:-8px 0 0 -8px}
+  .conn-handle.t:hover,.conn-handle.b:hover{margin-left:-8px}
+  .node.link-target,.freebox.link-target{box-shadow:0 0 0 3px #22c55e !important}
+  #edges #templink{pointer-events:none}
+  .freebox .fb-text{outline:none;white-space:pre-wrap;word-break:break-word;min-height:1.4em}
+  /* --- flowchart shapes --- */
+  .freebox.round{border-radius:999px}
+  .freebox.circle{border-radius:50%}
+  .freebox.shaped{background:transparent !important;border:none !important;box-shadow:none !important;padding:0;
+    display:flex;align-items:center;justify-content:center;text-align:center}
+  .freebox.shaped .fb-text{position:relative;z-index:2;padding:0 12px}
+  /* An outline that lassos people must not swallow clicks meant for the people inside it —
+     but it still has to be selectable, or you can never move, resize or delete it again.
+     So: the box is transparent to the pointer, the OUTLINE ITSELF is not. Click the line to
+     grab it; click anywhere inside and the click reaches the node underneath. */
+  .freebox.lasso,.freebox.ring{pointer-events:none;background:transparent !important;border:none !important;box-shadow:none !important}
+  .freebox.lasso .fb-shape,.freebox.ring .fb-shape{pointer-events:none}
+  .freebox.lasso .fb-shape path,.freebox.ring .fb-shape path{pointer-events:stroke;cursor:pointer}
+  .freebox.lasso .fb-text,.freebox.ring .fb-text{display:none}
+  .freebox.lasso .fb-del,.freebox.lasso .fb-color,.freebox.lasso .fb-resize,.freebox.lasso .fb-shape-sel,.freebox.lasso .conn-handle,
+  .freebox.ring .fb-del,.freebox.ring .fb-color,.freebox.ring .fb-resize,.freebox.ring .fb-shape-sel,.freebox.ring .conn-handle{pointer-events:all}
+  .freebox.lasso.selbox .fb-shape path,.freebox.ring.selbox .fb-shape path{stroke-dasharray:6 4}
+  .freebox.callout{align-items:flex-start !important;justify-content:flex-start !important}
+  .freebox.callout .fb-text{font-weight:500;line-height:1.5;text-align:left;padding:12px 14px;font-size:12.5px;white-space:pre-wrap}
+  .freebox.callout .fb-text::first-line{font-weight:700}
+  .freebox.shaped.diamond .fb-text{padding:0 24%}
+  .freebox.shaped.hex .fb-text{padding:0 16%}
+  .fb-shape{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
+  .fb-shape path{fill:var(--panel2);stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3}
+  .freebox.shaped.selbox .fb-shape path{stroke-width:3;stroke-dasharray:none}
+  .freebox .fb-shape-sel{position:absolute;top:-13px;left:20px;font-size:11px;padding:1px 3px;height:22px;
+    border-radius:6px;display:none;z-index:5;max-width:120px}
+  .freebox.selbox .fb-shape-sel{display:block}
+  .freebox .fb-del{position:absolute;top:-9px;right:-9px;width:20px;height:20px;border-radius:50%;background:#7f1d1d;color:#fecaca;font-size:12px;line-height:1;padding:0;display:none;align-items:center;justify-content:center}
+  .freebox.selbox .fb-del{display:flex}
+  .freebox .fb-color{position:absolute;top:-12px;left:-10px;width:24px;height:24px;border:2px solid var(--panel);border-radius:50%;padding:0;background:none;cursor:pointer;display:none;box-shadow:0 1px 4px var(--shadow)}
+  .freebox .fb-color::-webkit-color-swatch-wrapper{padding:0}
+  .freebox .fb-color::-webkit-color-swatch{border:none;border-radius:50%}
+  .freebox.selbox .fb-color{display:block}
+  .freebox .fb-resize{position:absolute;right:-6px;bottom:-6px;width:14px;height:14px;background:var(--accent);border:2px solid var(--panel);border-radius:3px;cursor:nwse-resize;display:none}
+  .freebox.selbox .fb-resize{display:block}
+  #edges text.linklabel{fill:var(--text);font:600 11px -apple-system,BlinkMacSystemFont,sans-serif;paint-order:stroke;stroke:var(--bg);stroke-width:3px;text-anchor:middle;dominant-baseline:middle;pointer-events:auto;cursor:pointer;user-select:none}
+  .linkbar{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 6px;box-shadow:0 6px 18px var(--shadow);z-index:8}
+  .linkbar input[type=color]{width:22px;height:22px;border:none;background:none;padding:0;cursor:pointer}
+  .linkbar input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+  .linkbar input[type=color]::-webkit-color-swatch{border:none;border-radius:4px}
+  .linkbar button{padding:3px 7px;font-size:12px;line-height:1;background:var(--panel2)}
+
+  /* ---------- Tree (CSS connectors) ---------- */
+  .tree ul{position:relative;padding-top:24px;display:flex;justify-content:center}
+  .tree li{list-style:none;position:relative;padding:24px 8px 0 8px;display:flex;flex-direction:column;align-items:center}
+  .tree li::before,.tree li::after{content:'';position:absolute;top:0;right:50%;border-top:2px solid var(--line);width:50%;height:24px}
+  .tree li::after{right:auto;left:50%;border-left:2px solid var(--line)}
+  .tree li:only-child::before,.tree li:only-child::after{display:none}
+  .tree li:only-child{padding-top:24px}
+  .tree li:first-child::before,.tree li:last-child::after{border:0 none}
+  .tree li:last-child::before{border-right:2px solid var(--line);border-radius:0 6px 0 0}
+  .tree li:first-child::after{border-radius:6px 0 0 0}
+  .tree ul ul::before{content:'';position:absolute;top:0;left:50%;border-left:2px solid var(--line);width:0;height:24px}
+  .tree>ul{padding-top:0}
+  .tree>ul>li:only-child{padding-top:0}
+
+  /* ---------- Node card ---------- */
+  .node{position:absolute;width:188px;background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--line);
+    border-radius:10px;padding:10px 12px;text-align:left;transition:box-shadow .12s,opacity .12s;user-select:none;cursor:grab}
+  .node:hover{box-shadow:0 8px 24px var(--shadow)}
+  .node.dragging{cursor:grabbing;z-index:5;box-shadow:0 12px 30px var(--shadow)}
+  .node.unit{background:var(--panel2);border-style:dashed}
+  .node.sel{box-shadow:0 0 0 2px var(--accent),0 8px 24px var(--shadow)}
+  .node.match{box-shadow:0 0 0 2px #fbbf24}
+  .node.hit{box-shadow:0 0 0 2px var(--accent)}
+  .node.dim{opacity:.16;filter:saturate(.4)}
+  .node.drag-over{box-shadow:0 0 0 3px #22c55e}
+  .node.dragging{opacity:.4}
+  .node .nm{font-weight:700;font-size:13px;line-height:1.25}
+  .node .tt{font-size:11px;color:var(--muted);line-height:1.3;margin-top:2px}
+  .node .meta{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .ent{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);background:var(--bg);padding:2px 6px;border-radius:5px}
+  .chip{font-size:9px;font-weight:600;background:var(--chip-bg);color:var(--chip-text);padding:2px 6px;border-radius:5px}
+  .cnt{font-size:9px;font-weight:700;color:var(--muted)}
+  .badge{position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;border-radius:10px;background:var(--accent);
+    color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+  .toggle{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);width:22px;height:22px;border-radius:50%;
+    background:var(--panel2);border:2px solid var(--line);color:var(--text);font-size:12px;line-height:1;padding:0;z-index:2}
+  .collapsed>ul{display:none}
+
+  /* ---------- Drawer ---------- */
+  #drawer{position:fixed;top:56px;right:0;bottom:0;width:380px;background:var(--panel);border-left:1px solid var(--line);
+    z-index:50;transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column}
+  #drawer.open{transform:none;box-shadow:-12px 0 40px var(--shadow)}
+  .dw-head{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+  .dw-head .nm{font-size:17px;font-weight:700}
+  .dw-head .tt{font-size:13px;color:var(--muted);margin-top:3px}
+  .dw-body{flex:1;overflow-y:auto;padding:18px}
+  .dw-body h3{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:20px 0 10px}
+  .dw-body h3:first-child{margin-top:0}
+  .colors{display:flex;gap:8px;flex-wrap:wrap}
+  .tagdef{border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:9px;background:var(--panel2)}
+  .tagdef .h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+  .tagdef .h b{font-size:12px;letter-spacing:.3px}
+  .tagdef .h span{font-size:11px;color:var(--muted)}
+  .tagdef .b{font-size:12px;line-height:1.5}
+  .tagdef .t{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}
+  .tagnote{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:11px}
+  .swatch{width:44px;height:36px;border-radius:8px;border:2px solid transparent;position:relative;cursor:pointer}
+  .swatch.on{border-color:var(--text);box-shadow:0 0 0 2px var(--accent)}
+  .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:5px 10px;border-radius:16px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);cursor:pointer}
+  .tag.on{background:var(--chip-bg);color:var(--chip-text);border-color:var(--chip-text)}
+  .tag .tagx{display:none;margin-left:5px;opacity:.55;font-weight:700}
+  .tag:hover .tagx{display:inline}
+  .tag .tagx:hover{opacity:1;color:#ef4444}
+  .tag.addtag{border-style:dashed;color:var(--accent);border-color:var(--accent);background:transparent}
+  .swatch.addsw{background:transparent;border:1.5px dashed var(--accent);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600}
+  .newstatus{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+  .newstatus input{width:100%}
+  .newstatus .ns-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .newstatus .ns-row input[type=color]{width:38px;flex:0 0 38px;padding:0;height:32px}
+  .action{background:var(--panel2);border-radius:10px;padding:12px;font-size:13px;line-height:1.5;border-left:3px solid var(--accent)}
+  .note{background:var(--panel2);border-radius:10px;padding:11px 12px;margin-bottom:9px}
+  .note .h{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px}
+  .note .h b{color:var(--text)}
+  .note .b{font-size:13px;line-height:1.45}
+  .note.sys{background:transparent;border:1px dashed var(--line);font-size:12px;color:var(--muted)}
+  .dw-body details.history{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+  .dw-body details.history summary{cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;list-style:none;outline:none}
+  .dw-body details.history summary::-webkit-details-marker{display:none}
+  .dw-body details.history summary:before{content:"▸ "}
+  .dw-body details.history[open] summary:before{content:"▾ "}
+  .dw-body .hist-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .edit-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+  .close{position:absolute;top:14px;right:14px}
+
+  /* ---------- Modal ---------- */
+  .modal{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center}
+  .modal.open{display:flex}
+  .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;width:460px;max-height:82vh;overflow-y:auto}
+  .modal h2{font-size:16px;margin-bottom:16px}
+  .tagdef .h{display:flex;align-items:center;gap:8px}
+  .tagdef .h span{margin-left:auto;color:var(--muted);font-size:11px}
+  .tagdef .tagedit,.tagdef .tagdel{font-size:10px;padding:2px 7px;border-radius:5px;margin-left:0}
+  .tagdef .tagdel{color:#fecaca;background:#7f1d1d;border-color:#7f1d1d}
+  .np-l{display:block;font-size:11px;color:var(--muted);margin:12px 0 5px;font-weight:600}
+  .np-l .np-opt{font-weight:400;text-transform:none;opacity:.75}
+  #newpos input,#newpos select{width:100%}
+  .np-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .np-chips .chip{cursor:pointer;user-select:none;opacity:.5;border:1px solid transparent}
+  .np-chips .chip.on{opacity:1;border-color:currentColor}
+  .np-chips .sw{width:26px;height:26px;border-radius:7px;cursor:pointer;opacity:.45;border:2px solid transparent}
+  .np-chips .sw.on{opacity:1;border-color:var(--text)}
+  .legrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .legrow .sw{width:30px;height:30px;border-radius:7px;flex-shrink:0}
+  .legrow .txt{flex:1}.legrow .txt b{font-size:13px}.legrow .txt div{font-size:11px;color:var(--muted)}
+  .legrow .del{background:transparent;color:var(--muted);font-size:17px;line-height:1;padding:3px 9px;border-radius:6px;flex-shrink:0}
+  .legrow .del:hover{background:#7f1d1d;color:#fecaca}
+  .addcolor{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+  .addcolor input[type=color]{padding:2px;height:38px}
+  .hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+  .dash{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .dash .cell{background:var(--panel2);border-radius:10px;padding:12px}
+  .dash .cell b{font-size:13px}
+  .bar{height:8px;border-radius:4px;background:var(--line);margin-top:8px;display:flex;overflow:hidden}
+  .bar span{height:100%}
+  table.rpt{width:100%;border-collapse:collapse;font-size:12px}
+  table.rpt th{text-align:left;padding:7px 8px;border-bottom:2px solid var(--line);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  table.rpt td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+
+  /* ---------- Banner ---------- */
+  #banner{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:45;background:var(--banner-bg);color:var(--banner-text);
+    border:1px solid var(--banner-border);border-radius:10px;padding:9px 14px;font-size:12px;display:flex;align-items:center;gap:12px;max-width:660px;box-shadow:0 8px 24px var(--shadow)}
+  #banner button{background:transparent;color:var(--banner-text);padding:2px 6px}
+
+  /* ---------- Print (report → PDF) ---------- */
+  @media print{
+    body *{visibility:hidden}
+    #report,#report *{visibility:visible}
+    #report{position:absolute;inset:0;background:#fff;color:#000;display:block}
+    #report .box{max-height:none;width:100%;border:0;box-shadow:none;background:#fff;color:#000}
+    #report .noprint{display:none}
+    table.rpt th,table.rpt td{border-color:#ccc}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login">
+  <div class="card">
+    <h1>ACME MEP</h1>
+    <p>Org Assessment (as-is structure) — sign in to continue</p>
+    <label>Server URL <span style="opacity:.6">— blank = offline (this browser)</span></label>
+    <input id="lg-server" placeholder="e.g. http://localhost:8000" autocomplete="off" oninput="onServerInput()">
+    <label id="lbl-name">Your name (recorded on your notes)</label>
+    <input id="lg-name" placeholder="e.g. Abhas" autocomplete="off">
+    <label>Password</label>
+    <input id="lg-pass" type="password" placeholder="password">
+    <button class="btn-accent" style="width:100%;margin-top:18px;padding:11px" onclick="doLogin()">Enter</button>
+    <div class="err" id="lg-err"></div>
+    <div class="hint" style="margin-top:12px">Offline: any name + password <code>acmemep</code>. &nbsp;Server: your email + password.</div>
+  </div>
+</div>
+
+<!-- ============ SHELL ============ -->
+<header style="display:none" id="shell-head">
+  <div class="brand">
+    <div class="brand-mark">CB</div>
+    <div class="brand-txt"><b>ACME MEP</b><span>Org assessment</span></div>
+  </div>
+  <select class="filter board-sel" id="board-sel" title="Switch board" onchange="onBoardChange(this.value)" style="display:none"></select>
+  <div class="sep"></div>
+  <div class="stats" id="stats"></div>
+  <div class="spacer"></div>
+  <div class="findgroup">
+    <input class="search" id="search" placeholder="Search people…" oninput="onSearch(this.value)">
+    <select class="filter" id="filter" onchange="applyFilter()"></select>
+  </div>
+  <div class="sep"></div>
+  <span style="position:relative">
+    <button onclick="toggleAddMenu(event)" id="add-btn" title="Add a person or a drawing">＋ Add ▾</button>
+    <div id="addmenu" class="menu" style="display:none;right:auto;left:0;min-width:230px"></div>
+  </span>
+  <button onclick="toggleConnect()" id="connect-btn" title="Link mode — drag from one box to another (or click one, then the other). Esc to exit.">⇢ Link</button>
+  <div class="sep"></div>
+  <div class="zoom">
+    <button onclick="zoomBy(-0.15)" title="Zoom out">−</button>
+    <button onclick="fitView()" title="Fit to view">⤢</button>
+    <button onclick="zoomBy(0.15)" title="Zoom in">＋</button>
+  </div>
+  <div class="sep"></div>
+  <button onclick="toggleMapLegend()" id="key-btn" title="Key — what every mark on this chart means">🔑</button>
+  <button onclick="toggleTheme()" id="theme-btn" title="Light / dark">☾</button>
+  <div class="sep"></div>
+  <span id="syncdot" class="syncdot ok" onclick="retrySync()" title="Saved">●</span>
+  <div style="position:relative">
+    <button onclick="toggleMenu(event)" class="more-btn">More ▾</button>
+    <div id="menu" class="menu" style="display:none">
+      <div class="menu-h" id="mh-boards">Boards</div>
+      <button id="mi-newboard" onclick="newBoard();closeMenu()">＋&nbsp;&nbsp;New board…</button>
+      <button id="mi-renameboard" onclick="renameBoard();closeMenu()">✎&nbsp;&nbsp;Rename this board</button>
+      <button id="mi-delboard" onclick="deleteBoard();closeMenu()">×&nbsp;&nbsp;Delete this board</button>
+      <button id="mi-restoreboard" onclick="restoreBoardPicker();closeMenu()">↺&nbsp;&nbsp;Restore a deleted board…</button>
+      <div class="menu-h">View</div>
+      <button onclick="retidy();closeMenu()">⤢&nbsp;&nbsp;Re-tidy layout</button>
+      <button onclick="toggleOrient();closeMenu()">⇄&nbsp;&nbsp;Portrait / landscape</button>
+      <button onclick="collapseAll();closeMenu()">⊟&nbsp;&nbsp;Collapse all</button>
+      <button onclick="expandAll();closeMenu()">⊞&nbsp;&nbsp;Expand all</button>
+      <button id="snap-btn" onclick="toggleSnap();event.stopPropagation()">#&nbsp;&nbsp;Snap to grid</button>
+      <button onclick="undo();closeMenu()">↶&nbsp;&nbsp;Undo</button>
+      <button onclick="redo();closeMenu()">↷&nbsp;&nbsp;Redo</button>
+      <div class="menu-h">Overlays &amp; reports</div>
+      <button id="cost-btn" onclick="toggleCost();event.stopPropagation()">₹&nbsp;&nbsp;Cost overlay</button>
+      <button onclick="openLegend();closeMenu()">◐&nbsp;&nbsp;Statuses &amp; tags</button>
+      <button onclick="openDash();closeMenu()">▦&nbsp;&nbsp;Dashboard (per entity)</button>
+      <button onclick="openReport();closeMenu()">📋&nbsp;&nbsp;Action report</button>
+      <div class="menu-h">Data</div>
+      <button onclick="exportPNG();closeMenu()">⤓&nbsp;&nbsp;Export chart (PNG)</button>
+      <button onclick="exportJSON();closeMenu()">Export data (JSON)</button>
+      <button onclick="document.getElementById('imp').click();closeMenu()">Import data (JSON)</button>
+      <button onclick="resetSeed();closeMenu()">Reset to seed</button>
+      <div class="menu-h" id="mh-admin" style="display:none">Admin</div>
+      <button id="mi-users" onclick="openUsers();closeMenu()" style="display:none">👥&nbsp;&nbsp;Team &amp; logins</button>
+    </div>
+  </div>
+  <input type="file" id="imp" accept="application/json" style="display:none" onchange="importJSON(event)">
+  <div style="position:relative">
+    <button class="acct-btn" onclick="toggleAcct(event)" id="acct-btn">
+      <span class="avatar" id="acct-av">A</span><span class="acct-name" id="who"></span><span class="caret">▾</span>
+    </button>
+    <div id="acctmenu" class="menu" style="display:none;min-width:240px">
+      <div class="acct-head"><span class="avatar lg" id="acct-av2">A</span>
+        <div><b id="acct-n">—</b><span id="acct-e">—</span><span id="acct-r"></span></div></div>
+      <button onclick="openChangePw();closeAcct()">🔑&nbsp;&nbsp;Change password…</button>
+      <button id="acct-team" onclick="openUsers();closeAcct()" style="display:none">👥&nbsp;&nbsp;Team &amp; logins</button>
+      <div class="menu-h">Session</div>
+      <button onclick="logout()">↩&nbsp;&nbsp;Sign out</button>
+    </div>
+  </div>
+</header>
+
+<div class="modal" id="changepw"><div class="box" style="width:380px">
+  <h2>Change password</h2>
+  <label class="np-l">Current password</label>
+  <input id="pw-cur" type="password" autocomplete="current-password">
+  <label class="np-l">New password <span class="np-opt">at least 8 characters</span></label>
+  <input id="pw-new" type="password" autocomplete="new-password">
+  <label class="np-l">Confirm new password</label>
+  <input id="pw-new2" type="password" autocomplete="new-password">
+  <div style="display:flex;gap:8px;margin-top:18px">
+    <button class="btn-accent" onclick="submitChangePw()">Update password</button>
+    <button onclick="closeChangePw()">Cancel</button>
+  </div>
+  <div class="err" id="pw-err"></div>
+</div></div>
+
+<div id="canvas" style="display:none"><div id="connect-hint">Link mode — drag from one box onto another. Empty space still pans. <b>Esc</b> to exit.</div>
+  <div id="viewport"><svg id="edges" xmlns="http://www.w3.org/2000/svg"></svg><div id="nodes"></div></div>
+  <div id="maplegend"><div class="lg-head" onclick="toggleLegendMin()"><span id="lg-caret">▾</span>&nbsp;Key — what every mark means<span id="lg-hint"></span></div><div class="lg-body scrolls" id="lg-key"></div></div>
+
+</div>
+
+<div id="banner" style="display:none">
+  <span><b>Connect:</b> hover a box → drag its <b>blue dot</b> onto another · <b>＋ Add</b> → a <b>person</b> (status, tags, notes) or any <b>drawing</b> shape (text, colour, links) — click a selected box again, or press <b>Enter</b>, to type in it · select + <b>Delete</b> to remove · click a line → re-attach ends, re-route, colour / dash / label · <b>scroll</b> pans, <b>pinch</b> (or ⌃-scroll) zooms · <b>⌘Z</b> undoes ratings, tags, edits &amp; canvas changes.</span>
+  <button onclick="dismissBanner()">Dismiss</button>
+</div>
+
+<!-- ============ DRAWER ============ -->
+<div id="drawer">
+  <button class="close" onclick="closeDrawer()">✕</button>
+  <div class="dw-head"><div class="nm" id="dw-nm"></div><div class="tt" id="dw-tt"></div></div>
+  <div class="dw-body" id="dw-body"></div>
+</div>
+
+<!-- ============ LEGEND MODAL ============ -->
+<div class="modal" id="newpos">
+  <div class="box" style="width:420px">
+    <h2 id="np-title">New position</h2>
+    <div id="np-parent-wrap" hidden>
+      <label class="np-l">Reports to</label>
+      <select id="np-parent"></select>
+    </div>
+    <label class="np-l">Name</label>
+    <input id="np-name" placeholder="e.g. Ramesh Kulkarni" autocomplete="off">
+    <label class="np-l">Role / title</label>
+    <input id="np-title-in" placeholder="e.g. Warehouse Executive" autocomplete="off">
+    <label class="np-l">Company</label>
+    <select id="np-entity"></select>
+    <label class="np-l">Status <span class="np-opt">optional</span></label>
+    <div id="np-rag" class="np-chips"></div>
+    <label class="np-l">Tags <span class="np-opt">optional — click to toggle</span></label>
+    <div id="np-tags" class="np-chips"></div>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn-accent" onclick="createPosition()">Add position</button>
+      <button onclick="closeNewPos()">Cancel</button>
+    </div>
+    <p class="hint" id="np-hint"></p>
+  </div>
+</div>
+<div class="modal" id="legend">
+  <div class="box">
+    <h2>Statuses &amp; tags</h2>
+    <div id="leg-list"></div>
+    <h2 style="margin-top:22px;font-size:14px">Add a status</h2>
+    <div class="addcolor">
+      <input id="nc-label" placeholder="Name it — e.g. Rising star">
+      <input id="nc-color" type="color" value="#8b5cf6">
+      <input id="nc-meaning" placeholder="What does this status mean? (required)" style="grid-column:1/3">
+      <input id="nc-action" placeholder="Implied action" style="grid-column:1/3">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
+      <button class="btn-accent" onclick="addColor()">Add status</button>
+      <button onclick="addTag()">＋ Add tag</button>
+      <button onclick="closeLegend()" style="margin-left:auto">Done</button>
+    </div>
+    <p class="hint">A <b>status</b> is how a person is rated (the colour on their box). A <b>tag</b> says which problem it is. Both are shared across the chart, and both can also be created straight from a person's panel.</p>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD MODAL ============ -->
+<div class="modal" id="dash">
+  <div class="box">
+    <h2>Assessment roll-up by entity</h2>
+    <div class="dash" id="dash-body"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px"><button onclick="closeDash()">Done</button></div>
+  </div>
+</div>
+
+<!-- ============ TEAM / USERS MODAL ============ -->
+<div class="modal" id="users">
+  <div class="box">
+    <h2>Team &amp; logins</h2>
+    <p class="hint" style="margin:-6px 0 14px">Each person gets their own login, so every note and rating shows who did it. <b>Consultant</b> = full access + can manage logins · <b>Client (viewer)</b> = for sharing with the client.</p>
+    <div id="user-list"></div>
+    <h2 style="margin-top:22px;font-size:14px">Add a login</h2>
+    <div class="addcolor" style="grid-template-columns:1fr 1fr">
+      <input id="nu-name" placeholder="Name (e.g. A. Sharma)">
+      <input id="nu-email" type="email" placeholder="Email">
+      <input id="nu-pass" placeholder="Password" style="grid-column:1/2">
+      <select id="nu-role" style="grid-column:2/3"><option value="consultant">Consultant (team)</option><option value="client_viewer">Client (viewer)</option></select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn-accent" onclick="addUser()">Create login</button>
+      <button onclick="closeUsers()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REPORT MODAL ============ -->
+<div class="modal" id="report">
+  <div class="box" style="width:860px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h2 style="margin:0">Action list <span id="report-count" style="font-size:12px;color:var(--muted);font-weight:500"></span></h2>
+      <div class="noprint" style="display:flex;gap:8px">
+        <button onclick="downloadReportCSV()">Download CSV</button>
+        <button onclick="printReport()">Print / PDF</button>
+        <button onclick="closeReport()">Done</button>
+      </div>
+    </div>
+    <div id="report-body" style="overflow:auto"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ACME MEP Org Assessment — single-file prototype
+   Data persists to localStorage. Export/Import = JSON portability.
+   Backend phase swaps the STORE layer for the FastAPI API.
+   ============================================================ */
+
+const STORAGE_KEY = 'cb-orgchart-v4';   // bumped when the seed changes (v4: default fully-expanded)
+const PASSWORD = 'acmemep';           // prototype gate; real auth arrives with the backend
+
+//__SEED_START__  (pure / DOM-free — this block also regenerates seed-org.json)
+const COLORS = [
+  { key:'green', label:'Strong',            hex:'#22c55e', meaning:'Well-utilised, performing',                  action:'Keep / protect' },
+  { key:'amber', label:'Attention',         hex:'#f59e0b', meaning:'Partial — some issue',                       action:'Coach / clarify / monitor' },
+  { key:'red',   label:'Problem',           hex:'#ef4444', meaning:'Severely underutilised OR blocked from use', action:'Replace, or load with more responsibility' },
+  { key:'blue',  label:'Key-man risk',      hex:'#3b82f6', meaning:'Single point of failure',                    action:'Document, cross-train, build backup' },
+  { key:'grey',  label:'Vacant / undefined',hex:'#9ca3af', meaning:'Role undefined or to-hire',                  action:'Define + fill' }
+];
+const ALL_TAGS = ['key-man','underutilised','overloaded','undefined-role','to-replace','to-promote'];
+
+let _sid = 0;
+const _uid = () => 'n' + (++_sid);
+/* P = person, U = org unit (department / entity). opts: {rag, tags, notes, collapsed} */
+function P(name, role, entity, kids, opts){ opts=opts||{};
+  return { id:_uid(), type:'person', name, title:role||'', entity:entity||'', rag:opts.rag||null,
+           tags:opts.tags||[], notes:opts.notes||[], cost:opts.cost||null, _collapsed:!!opts.collapsed, reports:kids||[] }; }
+function U(name, badge, entity, kids, opts){ opts=opts||{};
+  return { id:_uid(), type:'unit', name, title:badge||'', entity:entity||'', rag:null,
+           tags:[], notes:[], cost:null, _collapsed:!!opts.collapsed, reports:kids||[] }; }
+
+const km = (body)=>({rag:'blue',tags:['key-man'],notes:body?[{author:'Admin',at:'2026-07-24T10:00:00',body}]:[]});
+
+//__PEOPLE_START__  (intentionally empty — ACME's org lives only in Postgres, never in this file)
+// CB's copy of this tool kept 89 real names here and stripped them at build time. This one never
+// has them to strip: offline mode starts from a bare root, and the real tree arrives from /tree
+// after login. build.sh still gates on it, as a second line rather than the only one.
+const SEED_ROOT = { id:'n1', type:'unit', name:'ACME MEP Services', title:'', entity:'',
+  rag:null, tags:[], notes:[], cost:null, _collapsed:false, reports:[] };
+//__PEOPLE_END__
+const SEED = { colors: COLORS, root: SEED_ROOT, tags: ALL_TAGS };
+//__SEED_END__
+
+/* ---------------- STATE + STORE ---------------- */
+let state = load();
+let user = null;
+let selectedId = null;
+let FILTER = null;     // {kind:'c'|'t', key}
+let COST_ON = false;
+let SIGNALS = {};
+let dragId = null;
+
+function load(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
+  return { colors: structuredClone(SEED.colors), tags: [...SEED.tags], org: structuredClone(SEED.root) };
+}
+/* Tag vocabulary. Falls back to the seed list so state saved before tags were
+   editable (no `tags` key) still renders instead of blowing up. */
+function tagList(){ if(!state.tags || !state.tags.length) state.tags=[...ALL_TAGS]; return state.tags; }
+function tagDefs(){ return state.tagdefs || []; }
+function tagDef(name){ return tagDefs().find(t=>t.name===name) || null; }
+function tagTip(name){
+  const d=tagDef(name); if(!d||!d.definition) return 'Click to apply / remove';
+  return `${name.toUpperCase()}\n\n${d.definition}`+(d.test?`\n\nTHE TEST\n${d.test}`:'')+(d.action?`\n\nWHAT WE'D DO\n${d.action}`:'');
+}
+/* tags may come back as plain strings (older payloads) or {name,definition,…} */
+function absorbTags(arr){
+  if(!Array.isArray(arr)) return;
+  state.tagdefs = arr.map(t=> typeof t==='string' ? {name:t} : t);
+  state.tags    = state.tagdefs.map(t=>t.name);
+}
+function save(){ if(apiMode()) return; localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function colorOf(key){ return safeColor((state.colors.find(c=>c.key===key)||{}).hex) || 'var(--line)'; }
+function ragLabel(k){ return (state.colors.find(c=>c.key===k)||{}).label || k; }
+function isUnit(n){ return n.type==='unit'; }
+function openActions(n){ return (n.notes||[]).filter(x=>x.status==='open').length; }
+function subtreeCost(n){ let s=Number(n.cost)||0; (n.reports||[]).forEach(c=>s+=subtreeCost(c)); return s; }
+function fmtCost(v){ v=Number(v)||0; return v ? '₹'+v.toLocaleString('en-IN') : '—'; }
+
+function findNode(id, node=state.org, parent=null){
+  if(!node) return null;
+  if(node.id===id) return {node, parent};
+  for(const r of (node.reports||[])){ const f=findNode(id,r,node); if(f) return f; }
+  return null;
+}
+function walk(node, fn){ if(!node) return; fn(node); (node.reports||[]).forEach(r=>walk(r,fn)); }
+
+/* ---------------- API MODE (dual: offline localStorage ↔ hosted backend) ---------------- */
+const API = { base:null, token:null };
+function apiMode(){ return !!API.base; }
+async function api(path, opts={}){
+  const headers = { 'Content-Type':'application/json' };
+  if(API.token) headers['Authorization'] = 'Bearer '+API.token;
+  const res = await fetch(API.base + path, { ...opts, headers:{ ...headers, ...(opts.headers||{}) } });
+  // Only a rejected TOKEN means the session died. Endpoints that check a password of their own
+  // must be able to say no without signing the user out.
+  if(res.status===401 && !opts.noAuthBounce){ alert('Session expired — please log in again.'); logout(); throw new Error('unauthorized'); }
+  if(!res.ok){
+    // FastAPI returns {"detail":"…"}; throwing the raw body put JSON braces in front of the user
+    // on every failure. Unwrap it once here so every caller gets a sentence.
+    let t='';
+    try{ t=await res.text(); }catch(e){}
+    let msg=t;
+    try{ const j=JSON.parse(t); msg = (typeof j.detail==='string' ? j.detail : (j.detail&&j.detail[0]&&j.detail[0].msg)) || t; }catch(e){}
+    const err=new Error(msg || ('HTTP '+res.status)); err.status=res.status; throw err;
+  }
+  const ct = res.headers.get('content-type')||'';
+  return ct.includes('application/json') ? res.json() : null;
+}
+function snapshotCollapse(){ const m={}; walk(state.org,n=>{ m[n.id]=!!n._collapsed; }); return m; }
+function defaultCollapse(n){ return false; }   // default fully expanded; user collapses are preserved across refreshes
+/* pull the authoritative tree from the server; preserve collapse state across refreshes */
+async function refreshTree(preserve){
+  const snap = preserve ? snapshotCollapse() : null;
+  const d = await api('/tree'+boardParam());
+  state.org = d.root; if(d.colors) state.colors = d.colors; if(d.tags) absorbTags(d.tags);
+  walk(state.org, n=>{ n._collapsed = (snap && n.id in snap) ? snap[n.id] : defaultCollapse(n); });
+  // the tree just changed under us — a deleted person must not still be a member of a ring,
+  // and a link must not still point at a box that is gone (pruneOrphanLinks existed but was
+  // never actually called anywhere)
+  pruneMarkMembers(); pruneOrphanLinks();
+  refreshFilter(); render();
+}
+/* run a server mutation, then re-pull the tree + re-open the drawer on the same node */
+async function apiDo(fn){
+  try{
+    await fn();
+    await refreshTree(true);
+    if(selectedId){ if(findNode(selectedId)) openNode(selectedId); else closeDrawer(); }
+  }catch(e){ if(e.message!=='unauthorized') alert('Server error: '+e.message); }
+}
+
+/* ============================================================
+   ★★★  YOUR CONSULTING LOGIC  ★★★  (see PRD §7)
+   suggestAction(node) → the recommendation shown in the drawer + report.
+   Refine the decision tree with the rules you actually use.
+   ============================================================ */
+function suggestAction(node){
+  const span = (node.reports||[]).length;
+  const t = node.tags||[];
+  if(node.rag==='red' && t.includes('overloaded')) return 'Overloaded & failing — offload work and build a backup before judging performance.';
+  if(node.rag==='red' && (t.includes('underutilised')||span===0)) return 'Underutilised — expand the mandate / add responsibility before considering replacement.';
+  if(node.rag==='red') return 'Problem role — diagnose root cause, then decide: reassign, coach, or replace.';
+  if(node.rag==='blue') return 'Key-man risk — document the process, cross-train a backup, remove the single point of failure.';
+  if(node.rag==='amber') return 'Watch — clarify expectations and re-rate after the next review.';
+  if(node.rag==='green') return span>0 ? 'Strong — protect, and use as a mentor/anchor for weaker nodes.' : 'Strong individual contributor — consider stretch scope.';
+  return 'Not yet rated — set a colour to generate a recommendation.';
+}
+
+/* auto span-of-control / bottleneck signals (computed, not stored).
+   RETIRED 2026-09-05 at Abhas's call: because it recomputed on every render it could appear or
+   vanish because someone moved a box, not because anything changed in the business — a mark you
+   have to remember the meaning of without it ever being a decision. Kept, not deleted: re-enable
+   by calling computeSignals() from render() and restoring the chip in nodeHTML. */
+function computeSignals(){
+  SIGNALS={};
+  if(!state.org) return;
+  (function w(n,parent){
+    const s=[]; const span=(n.reports||[]).length;
+    if(n.type==='person'){
+      if(span>=8) s.push('Wide span of control — '+span+' direct reports.');
+      if(parent && parent.type==='unit' && span>0){
+        const psibs=(parent.reports||[]).filter(x=>x.type==='person');
+        if(psibs.length===1) s.push('“'+parent.name+'” funnels entirely through this one role.');
+      }
+    }
+    if(s.length) SIGNALS[n.id]=s;
+    (n.reports||[]).forEach(c=>w(c,n));
+  })(state.org,null);
+}
+
+/* ---------------- THEME ---------------- */
+function currentTheme(){ return document.documentElement.getAttribute('data-theme') || 'dark'; }
+function toggleTheme(){
+  const next = currentTheme()==='dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('cb-theme', next); }catch(e){}
+  const b=document.getElementById('theme-btn'); if(b) b.textContent = next==='dark' ? '☾' : '☀';
+}
+
+/* ---------------- MENU ---------------- */
+/* One place to add anything. Two buttons ("+ Person" / "+ Box") made you know which object
+   type you wanted before you knew the difference — and for a long time only "+ Box" existed,
+   so people reached for it and got a drawing when they wanted a position. The menu is built
+   FROM `SHAPES`, so adding a shape there puts it here automatically. */
+function toggleAddMenu(e){
+  if(e) e.stopPropagation();
+  const m=document.getElementById('addmenu');
+  if(m.style.display!=='none'){ m.style.display='none'; return; }
+  const drawings = Object.keys(SHAPES).map(k=>
+    `<button data-addshape="${esc(k)}" title="${esc(SHAPES[k].note||'')}">${esc(SHAPES[k].label)}</button>`).join('');
+  m.innerHTML =
+    `<div class="menu-h">Org chart</div>
+     <button data-addperson="1" title="A position on the chart — carries status, tags and notes">👤&nbsp;&nbsp;Person</button>
+     <div class="menu-h">Drawing — text, colour and links only</div>${drawings}`;
+  m.style.display='block';
+}
+function closeAddMenu(){ const m=document.getElementById('addmenu'); if(m) m.style.display='none'; }
+document.addEventListener('click', e=>{
+  if(!e.target.closest) return;
+  const stat=e.target.closest('.pill[data-statfilter]');
+  if(stat){ legendFilter(stat.dataset.statfilter); return; }
+  if(!e.target.closest('#acctmenu, #acct-btn')) closeAcct();
+  const person=e.target.closest('#addmenu [data-addperson]');
+  if(person){ closeAddMenu(); addPersonAnywhere(); return; }
+  const shape=e.target.closest('#addmenu [data-addshape]');
+  if(shape){ closeAddMenu(); addBox(shape.dataset.addshape); return; }
+  if(!e.target.closest('#addmenu, #add-btn')) closeAddMenu();
+});
+/* ---------------- ACCOUNT ---------------- */
+function toggleAcct(e){
+  if(e) e.stopPropagation();
+  const m=document.getElementById('acctmenu');
+  if(m.style.display!=='none'){ m.style.display='none'; return; }
+  const initials=(user&&user.name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  document.getElementById('acct-av').textContent=initials;
+  document.getElementById('acct-av2').textContent=initials;
+  document.getElementById('acct-n').textContent=(user&&user.name)||'—';
+  document.getElementById('acct-e').textContent=(user&&user.email)||'';
+  const r=document.getElementById('acct-r');
+  r.textContent=(user&&user.role)? user.role.replace('_',' ') : '';
+  r.style.display=(user&&user.role)?'inline-block':'none';
+  // password change only exists against a server; offline mode has no account
+  document.querySelector('#acctmenu button').style.display = apiMode()?'block':'none';
+  document.getElementById('acct-team').style.display =
+    (apiMode() && user && user.role==='consultant') ? 'block' : 'none';
+  m.style.display='block';
+}
+function closeAcct(){ const m=document.getElementById('acctmenu'); if(m) m.style.display='none'; }
+function openChangePw(){
+  ['pw-cur','pw-new','pw-new2'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('pw-err').textContent='';
+  document.getElementById('changepw').classList.add('open');
+  setTimeout(()=>document.getElementById('pw-cur').focus(),40);
+}
+function closeChangePw(){ document.getElementById('changepw').classList.remove('open'); }
+async function submitChangePw(){
+  const cur=document.getElementById('pw-cur').value;
+  const a=document.getElementById('pw-new').value, b=document.getElementById('pw-new2').value;
+  const err=document.getElementById('pw-err');
+  if(!cur){ err.textContent='Enter your current password.'; return; }
+  if(a.length<8){ err.textContent='New password must be at least 8 characters.'; return; }
+  if(a!==b){ err.textContent='The two new passwords do not match.'; return; }
+  err.textContent='Saving…';
+  try{
+    await api('/me/password',{method:'PATCH',noAuthBounce:true,body:JSON.stringify({current:cur,new:a})});
+    closeChangePw(); alert('Password updated. It applies the next time you sign in.');
+  }catch(e){ err.textContent = /403|not correct/i.test(e.message) ? 'Current password is not correct.' : e.message; }
+}
+function toggleMenu(e){ if(e) e.stopPropagation(); const m=document.getElementById('menu'); m.style.display = m.style.display==='none' ? 'block' : 'none'; }
+function closeMenu(){ const m=document.getElementById('menu'); if(m) m.style.display='none'; }
+window.addEventListener('click',closeMenu);
+
+/* ---------------- LOGIN ---------------- */
+function onServerInput(){
+  const on = !!document.getElementById('lg-server').value.trim();
+  document.getElementById('lbl-name').textContent = on ? 'Email' : 'Your name (recorded on your notes)';
+  document.getElementById('lg-name').placeholder = on ? 'admin@acmemep.local' : 'e.g. your name';
+}
+function dismissBanner(){ const b=document.getElementById('banner'); if(b) b.style.display='none'; try{ localStorage.setItem('cb-banner-hidden','1'); }catch(e){} }
+function restoreKeyPanel(){
+  try{
+    const el=document.getElementById('maplegend');
+    if(localStorage.getItem('cb-key-on')==='1'){ el.classList.add('on'); const b=document.getElementById('key-btn'); if(b) b.classList.add('active'); }
+    if(localStorage.getItem('cb-key-min')==='1'){ el.classList.add('min'); document.getElementById('lg-caret').textContent='▸'; }
+  }catch(e){}
+}
+function enterApp(){ restoreKeyPanel();
+  document.getElementById('login').style.display='none';
+  document.getElementById('shell-head').style.display='flex';
+  document.getElementById('canvas').style.display='block';
+  try{ if(!localStorage.getItem('cb-banner-hidden')) document.getElementById('banner').style.display='flex'; }catch(e){ document.getElementById('banner').style.display='flex'; }
+  document.getElementById('who').textContent = user.name;
+  document.getElementById('who').title = 'Signed in as '+user.name+(user.email?' ('+user.email+')':'');
+  document.getElementById('theme-btn').textContent = currentTheme()==='dark' ? '☾' : '☀';
+  updateOrientBtn();
+  const isAdmin = user && user.role==='consultant';
+  ['mi-users','mh-admin'].forEach(idd=>{ const el=document.getElementById(idd); if(el) el.style.display=isAdmin?'block':'none'; });
+  refreshFilter();
+}
+async function doLogin(){
+  const server = document.getElementById('lg-server').value.trim().replace(/\/+$/,'');
+  const who = document.getElementById('lg-name').value.trim();
+  const pass = document.getElementById('lg-pass').value;
+  const err = document.getElementById('lg-err');
+  if(server){                                   // ---- API mode ----
+    if(!who || !pass){ err.textContent='Enter email + password.'; return; }
+    err.textContent='Connecting…';
+    try{
+      const res = await fetch(server+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:who,password:pass})});
+      if(!res.ok){ err.textContent = res.status===401 ? 'Wrong email or password.' : 'Login failed ('+res.status+').'; return; }
+      const data = await res.json();
+      API.base = server; API.token = data.token;
+      user = { name:(data.user&&data.user.name)||who, role:(data.user&&data.user.role)||'', email:(data.user&&data.user.email)||who };
+      try{ localStorage.setItem('org-api-url', server); }catch(e){}
+      enterApp();
+      await loadBoards();
+      if(BOARD){ await switchBoard(BOARD.id, true); }
+      else { await refreshTree(false); await pullCanvas(); render(); fitView(); }
+    }catch(e){ err.textContent='Cannot reach server: '+e.message; }
+    return;
+  }
+  if(!who){ err.textContent='Enter your name.'; return; }   // ---- offline mode ----
+  if(pass!==PASSWORD){ err.textContent='Wrong password.'; return; }
+  user = { name:who };
+  enterApp(); render(); fitView();
+}
+function logout(){ user=null; API.base=null; API.token=null; location.reload(); }
+document.getElementById('lg-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+(function(){ try{
+  if(window.ORG_API_BASE){                 // deployed (hosted) mode: fixed same-origin API, hide the Server URL field
+    const s=document.getElementById('lg-server'); s.value=window.ORG_API_BASE; s.style.display='none';
+    const lbl=s.previousElementSibling; if(lbl && lbl.tagName==='LABEL') lbl.style.display='none';
+    const hint=document.querySelector('#login .hint'); if(hint) hint.textContent='Log in with your team email + password.';
+    onServerInput();
+  } else {
+    const u=localStorage.getItem('org-api-url'); if(u){ document.getElementById('lg-server').value=u; onServerInput(); }
+  }
+}catch(e){} })();
+
+/* ---------------- LAYOUT + RENDER (free canvas: nodes carry x/y, edges drawn in SVG) ---------------- */
+const NW=188, NH=74, GAPX=30, GAPY=48;         // node box + gaps for the tidy auto-layout
+let ORIENT = (function(){ try{ return localStorage.getItem('cb-orient')||'LR'; }catch(e){ return 'LR'; } })(); // 'LR'=portrait (default) · 'TB'=landscape
+let POSITIONS = loadPositions();               // {nodeId: {x,y}} — a client-side layout overlay (both modes)
+let VIS=[], EDGES=[];                           // last-rendered visible nodes + parent→child edges
+function loadPositions(){ try{ return JSON.parse(localStorage.getItem('cb-pos-v2')||'{}'); }catch(e){ return {}; } }
+function savePositionsLocal(){ try{ localStorage.setItem('cb-pos-v2', JSON.stringify(POSITIONS)); }catch(e){} }
+function savePositions(){ savePositionsLocal(); if(apiMode()) scheduleCanvasPush(); }
+function toggleOrient(){
+  // This REPLACES every position — it is a relayout, not a view setting, and it throws away
+  // any hand-tuned layout. It was also not undoable, which is how a stray click could cost a
+  // layout that took a measured two-pass build to produce. One ⌘Z now puts it back.
+  pushUndo();
+  ORIENT = ORIENT==='LR' ? 'TB' : 'LR'; try{ localStorage.setItem('cb-orient',ORIENT); }catch(e){}
+  autoLayout(true); savePositions(); render(); fitView(); updateOrientBtn();
+}
+function updateOrientBtn(){ const b=document.getElementById('orient-btn'); if(b){ b.textContent = ORIENT==='LR'?'⇄':'⇅'; b.title = ORIENT==='LR'?'Portrait (left→right) — click for landscape':'Landscape (top→down) — click for portrait'; } }
+
+/* ---- Miro-style free canvas: standalone boxes + any-to-any connectors (client-side overlay, both modes) ---- */
+let CANVAS = loadCanvas();
+let SELSET = new Set();                 // selected free-box ids (multi-select)
+let SELLINK=null, SELEDGE=null, CONNECT=false, CONNSRC=null, SNAP=false;
+const GRID=20;
+let UNDO=[], REDO=[];
+function loadCanvas(){ try{ const c=JSON.parse(localStorage.getItem('cb-canvas-v1')||'{}'); return {boxes:c.boxes||[], links:c.links||[], ebends:c.ebends||{}}; }catch(e){ return {boxes:[],links:[],ebends:{}}; } }
+function saveCanvasLocal(){ try{ localStorage.setItem('cb-canvas-v1', JSON.stringify(CANVAS)); }catch(e){} }
+function saveCanvas(){ saveCanvasLocal(); if(apiMode()) scheduleCanvasPush(); }
+function saveAll(){ saveCanvas(); savePositions(); }
+
+/* ---------------- BOARDS ----------------
+   Master board = the as-is chart. Extra boards are an 'org' fork (a real copy of the
+   tree you can restructure without touching as-is) or a 'blank' canvas for process
+   mapping. Every board carries its own canvas. Hosted mode only. */
+let BOARDS=[], BOARD=null;                     // BOARD = the active board object
+function boardParam(){ return BOARD ? ('?board='+encodeURIComponent(BOARD.id)) : ''; }
+function isBlankBoard(){ return !!(BOARD && BOARD.kind==='blank'); }
+function renderBoardSel(){
+  const sel=document.getElementById('board-sel'); if(!sel) return;
+  if(!apiMode() || !BOARDS.length){ sel.style.display='none'; return; }
+  sel.style.display='';
+  sel.innerHTML = BOARDS.map(b=>`<option value="${esc(b.id)}"${BOARD&&b.id===BOARD.id?' selected':''}>${esc(b.name)}${b.kind==='blank'?' · board':(b.is_master?' · as-is':' · version')}</option>`).join('');
+  const rn=document.getElementById('mi-renameboard'); if(rn) rn.style.display = BOARD?'block':'none';
+  const dl=document.getElementById('mi-delboard');    if(dl) dl.style.display = (BOARD&&!BOARD.is_master)?'block':'none';
+}
+async function loadBoards(keepId){
+  if(!apiMode()) return;
+  try{
+    BOARDS = await api('/boards');
+    let want = keepId || (BOARD&&BOARD.id) || (()=>{ try{ return localStorage.getItem('cb-board'); }catch(e){ return null; } })();
+    BOARD = BOARDS.find(b=>b.id===want) || BOARDS.find(b=>b.is_master) || BOARDS[0] || null;
+    try{ if(BOARD) localStorage.setItem('cb-board', BOARD.id); }catch(e){}
+    renderBoardSel();
+  }catch(e){}
+}
+async function switchBoard(id, initial){
+  const b=BOARDS.find(x=>x.id===id); if(!b) return;
+  CV_LOADING=true; CV_SYNCED=false; clearTimeout(CV_TIMER); CV_TIMER=null;   // freeze autosave during the swap
+  BOARD=b; try{ localStorage.setItem('cb-board', id); }catch(e){}
+  // Each board has its own canvas — never carry the previous board's layout across.
+  // Skipped on first load so a browser-only layout can still seed an empty server doc.
+  if(!initial){ POSITIONS={}; CANVAS={boxes:[],links:[],ebends:{}}; }
+  CV_BASE=null; CV_VERSION=0;
+  SELSET.clear(); SELLINK=null; UNDO.length=0; REDO.length=0; closeDrawer();
+  renderBoardSel();
+  try{
+    if(b.kind==='blank'){ state.org=null; render(); await pullCanvas(); }
+    else { await refreshTree(false); await pullCanvas(); }
+  } finally { CV_LOADING=false; }
+  render(); fitView();
+}
+function onBoardChange(id){ switchBoard(id); }
+async function restoreBoardPicker(){
+  if(!apiMode()){ alert('Boards need the hosted version.'); return; }
+  try{
+    const gone=await api('/boards?deleted=true');
+    if(!gone.length){ alert('No deleted boards.'); return; }
+    const list=gone.map((b,i)=>`${i+1}. ${b.name} (${b.kind==='blank'?'board':'version'}${b.nodes?', '+b.nodes+' people':''})`).join('\n');
+    const pick=prompt('Restore which board?\n\n'+list+'\n\nEnter a number:','1');
+    if(pick===null) return;
+    const b2=gone[parseInt(pick,10)-1]; if(!b2){ alert('No board with that number.'); return; }
+    await api('/boards/'+b2.id+'/restore',{method:'POST'});
+    await loadBoards(b2.id); await switchBoard(b2.id);
+  }catch(e){ alert('Could not restore: '+e.message); }
+}
+async function restoreBoardById(id){
+  try{ await api('/boards/'+id+'/restore',{method:'POST'}); await loadBoards(id); await switchBoard(id); }
+  catch(e){ alert('Could not restore board: '+e.message); }
+}
+async function newBoard(){
+  if(!apiMode()){ alert('Boards need the hosted version (sign in with your team email).'); return; }
+  const kind=prompt('New board — type "copy" for a version of the org structure you can restructure, or "blank" for an empty process-mapping board:','copy');
+  if(kind===null) return;
+  const blank=/^b/i.test(kind.trim());
+  const name=prompt(blank?'Name this board (e.g. "Unitary order fulfilment"):':'Name this version (e.g. "To-be Option A"):', blank?'Process map':'To-be Option A');
+  if(name===null||!name.trim()) return;
+  const body={name:name.trim(), kind: blank?'blank':'org'};
+  if(!blank) body.copy_from = (BOARDS.find(b=>b.is_master)||{}).id;
+  try{
+    const b=await api('/boards',{method:'POST',body:JSON.stringify(body)});
+    await loadBoards(b.id); await switchBoard(b.id);
+  }catch(e){ alert('Could not create board: '+e.message); }
+}
+async function renameBoard(){
+  if(!BOARD){ return; }
+  const n=prompt('Rename board:', BOARD.name); if(n===null||!n.trim()) return;
+  try{ await api('/boards/'+BOARD.id,{method:'PATCH',body:JSON.stringify({name:n.trim()})}); await loadBoards(BOARD.id); }
+  catch(e){ alert('Could not rename: '+e.message); }
+}
+async function deleteBoard(){
+  if(!BOARD||BOARD.is_master){ alert('The as-is board cannot be deleted.'); return; }
+  if(!confirm(`Delete the board “${BOARD.name}”?\n\nYou can undo with ⌘Z, or bring it back later via More ▾ → Restore a deleted board.\n\nThe as-is chart is not affected.`)) return;
+  const gone=BOARD.id;
+  try{
+    await api('/boards/'+gone,{method:'DELETE'});
+    BOARD=null; await loadBoards(); if(BOARD) await switchBoard(BOARD.id);
+    // pushed AFTER the switch: switchBoard clears the undo stack (its entries
+    // belong to the board we just left), which would swallow this one.
+    UNDO.push({restoreBoard:gone}); REDO.length=0;
+  }catch(e){ alert('Could not delete: '+e.message); }
+}
+
+/* ---------- shared canvas (hosted mode): one versioned JSONB doc on the server ----------
+   Offline mode still uses localStorage. In hosted mode localStorage stays as a local
+   cache/fallback, but the server is the source of truth so the layout is shared with the
+   team and included in the nightly DB backup. */
+let CV_VERSION=0, CV_BASE=null, CV_TIMER=null, CV_PUSHING=false, CV_AGAIN=false, CV_LOADING=false, CV_SYNCED=false;
+/* Both sync paths deliberately swallow their errors so you can keep working offline. That is
+   right — but it was also SILENT, so a server you cannot reach looked exactly like a server
+   that had saved your work. On 2026-08-31 a failed pull left an empty canvas in memory and the
+   next save wrote it over a real connector. The guards stop the damage; this makes the state
+   visible so nobody edits for an hour believing it is saved. */
+let CV_ERR=null, CV_LASTOK=Date.now();
+function syncState(){
+  if(!apiMode()) return {k:'off',  t:'Offline — this browser only'};
+  if(CV_ERR)     return {k:'err',  t:'NOT SAVED — '+CV_ERR+'. Your work is safe in this browser; click to retry.'};
+  if(CV_PUSHING||CV_TIMER) return {k:'busy', t:'Saving…'};
+  return {k:'ok', t:'Saved · v'+CV_VERSION};
+}
+function renderSync(){
+  const el=document.getElementById('syncdot'); if(!el) return;
+  const s=syncState();
+  el.className='syncdot '+s.k; el.title=s.t;
+  el.textContent = s.k==='err' ? '⚠ Not saved' : s.k==='busy' ? '•' : s.k==='off' ? '○' : '●';
+}
+function retrySync(){ if(!CV_ERR) return; CV_ERR=null; renderSync(); pullCanvas().then(()=>{ CV_INTENT=false; pushCanvas(); }); }
+let CV_INTENT=false;   // set by a real user deletion; lets the mass-loss guard through once
+function intentionalRemoval(){ CV_INTENT=true; }
+/* ---------------- RELATIONAL MARKS ----------------
+   A lasso is ABOUT people; a callout is about a lasso. Both used to store only absolute
+   canvas coordinates, so anything that recomputed the layout — orientation toggle, retidy,
+   dragging a person, collapsing a unit, a tag change that alters a box's height — left the
+   whole critique layer behind, silently ringing whoever now happened to be standing there.
+   (That is exactly what happened on 2026-09-05: portrait→landscape moved every person and
+   the four lassos stayed put, so they ended up round strangers.)
+
+   Fix: two-way binding.
+     · While you EDIT a lasso (create / resize) its geometry decides its members.
+     · On every RENDER its members decide its geometry.
+   A callout stores an offset from the mark it is attached to, so it travels with it.
+   Everything then survives every layout change for free, because nothing is absolute. */
+function markMembers(b){
+  // whose centre currently sits inside this lasso — measured from the DOM, so a box that
+  // grew because someone added a tag is accounted for
+  const out=[];
+  document.querySelectorAll('#nodes .node').forEach(el=>{
+    const id=el.dataset.id; const p=POSITIONS[id]; if(!p) return;
+    const cx=p.x+el.offsetWidth/2, cy=p.y+el.offsetHeight/2;
+    if(b.x<=cx&&cx<=b.x+b.w&&b.y<=cy&&cy<=b.y+b.h) out.push(id);
+  });
+  return out;
+}
+function memberRect(ids){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,n=0;
+  ids.forEach(id=>{
+    const p=POSITIONS[id]; if(!p) return;
+    const el=document.querySelector(`#nodes .node[data-id="${id}"]`);
+    if(!el) return;                       // collapsed or filtered out — ignore, don't guess
+    x0=Math.min(x0,p.x); y0=Math.min(y0,p.y);
+    x1=Math.max(x1,p.x+el.offsetWidth); y1=Math.max(y1,p.y+el.offsetHeight); n++;
+  });
+  return n ? {x:x0,y:y0,w:x1-x0,h:y1-y0,n} : null;
+}
+const MARK_PAD=22;
+/* Runs AFTER the DOM is written, so it can measure. Patches element styles in place rather
+   than re-rendering — that keeps it out of any render loop. */
+function reflowMarks(){
+  if(!CANVAS.boxes.length) return false;
+  let moved=false;
+  const put=(b,x,y,w,h)=>{
+    const sameXY = Math.abs(b.x-x)<1 && Math.abs(b.y-y)<1;
+    const sameWH = (w==null && h==null) ||
+                   (Math.abs((b.w||0)-(w||0))<1 && Math.abs((b.h||0)-(h||0))<1);
+    if(sameXY && sameWH) return;
+    b.x=Math.round(x); b.y=Math.round(y); if(w!=null) b.w=Math.round(w); if(h!=null) b.h=Math.round(h);
+    const el=document.querySelector(`.freebox[data-box="${b.id}"]`);
+    if(el){ el.style.left=b.x+'px'; el.style.top=b.y+'px';
+            if(w!=null){ el.style.width=b.w+'px';
+              if(el.classList.contains('shaped')) el.style.height=b.h+'px'; else el.style.minHeight=b.h+'px'; } }
+    moved=true;
+  };
+  // 1. lassos follow their members
+  CANVAS.boxes.forEach(b=>{
+    if((b.shape!=='lasso'&&b.shape!=='ring') || !(b.members||[]).length) return;
+    const r=memberRect(b.members); if(!r) return;
+    put(b, r.x-MARK_PAD, r.y-MARK_PAD, r.w+MARK_PAD*2, r.h+MARK_PAD*2);
+  });
+  // 2. callouts follow whatever they are attached to, keeping the offset you placed them at
+  CANVAS.boxes.forEach(b=>{
+    if(b.shape!=='callout' || !b.anchor || b.ax==null) return;
+    const a=CANVAS.boxes.find(x=>x.id===b.anchor); if(!a) return;
+    put(b, a.x+b.ax, a.y+b.ay, null, null);
+  });
+  return moved;
+}
+/* Called when the user finishes creating or resizing a lasso: geometry -> membership. */
+function bindMarkMembers(id){
+  const b=CANVAS.boxes.find(x=>x.id===id); if(!b) return;
+  if(b.shape!=='lasso'&&b.shape!=='ring') return;
+  b.members=markMembers(b);
+}
+/* Called when the user finishes dragging a callout: re-record its offset from its anchor. */
+function rebindCalloutAnchor(id){
+  const b=CANVAS.boxes.find(x=>x.id===id); if(!b||b.shape!=='callout') return;
+  const link=(CANVAS.links||[]).find(l=>l.from===b.id);
+  const a=link && CANVAS.boxes.find(x=>x.id===link.to);
+  if(a){ b.anchor=a.id; b.ax=Math.round(b.x-a.x); b.ay=Math.round(b.y-a.y); }
+}
+function canvasDoc(){ return {pos:POSITIONS, boxes:CANVAS.boxes, links:CANVAS.links, ebends:CANVAS.ebends||{}, orient:ORIENT}; }
+function applyCanvasDoc(d){
+  POSITIONS=d.pos||{}; CANVAS={boxes:d.boxes||[], links:d.links||[], ebends:d.ebends||{}};
+  // Orientation belongs to the BOARD, not the browser. It used to live in localStorage while
+  // the positions it rewrites were shared server-side — so one person switching to landscape
+  // silently re-laid out everyone else's board, and whoever toggled last won.
+  if(d.orient && d.orient!==ORIENT){ ORIENT=d.orient; try{ localStorage.setItem('cb-orient',ORIENT); }catch(e){} updateOrientBtn(); }
+  migrateBends(); savePositionsLocal(); saveCanvasLocal();
+}
+/* old bends stored an ABSOLUTE lane ({m,off}); convert once to the relative form */
+function migrateBends(){
+  (CANVAS.links||[]).forEach(l=>{
+    if(!l.bend || l.bend.rel!==undefined || l.bend.x!==undefined) return;
+    const a=boxRect(l.from), b=boxRect(l.to);
+    if(!a||!b){ delete l.bend; return; }
+    const ca=centerOf(a), cb=centerOf(b);
+    const horiz=Math.abs(cb.x-ca.x)>=Math.abs(cb.y-ca.y);
+    if(l.bend.off!==undefined){ const base=horiz?(ca.y+cb.y)/2:(ca.x+cb.x)/2; l.bend={rel:l.bend.off-base, axis:horiz?'y':'x'}; }
+    else delete l.bend;                       // a bare {m} did nothing useful — let the router decide
+  });
+}
+/* links whose endpoint no longer exists are invisible but still stored — drop them */
+/* a person who no longer exists cannot still be inside a ring */
+function pruneMarkMembers(){
+  const live=new Set(); if(state.org) walk(state.org,n=>live.add(n.id));
+  (CANVAS.boxes||[]).forEach(b=>{ if(b.members) b.members=b.members.filter(id=>live.has(id)); });
+}
+function pruneOrphanLinks(){
+  const before=(CANVAS.links||[]).length; intentionalRemoval();
+  CANVAS.links=(CANVAS.links||[]).filter(l=>boxRect(l.from)&&boxRect(l.to));
+  return before-CANVAS.links.length;
+}
+function cloneDoc(d){ return JSON.parse(JSON.stringify(d)); }
+function docEmpty(d){ return !d || (!Object.keys(d.pos||{}).length && !(d.boxes||[]).length && !(d.links||[]).length && !Object.keys(d.ebends||{}).length); }
+function busyEditing(){
+  if(typeof BEND!=='undefined'&&BEND) return true;
+  if(typeof RZ!=='undefined'&&RZ) return true;
+  if(typeof LINKING!=='undefined'&&LINKING) return true;
+  // Typing counts as editing. A poller render replaces the whole #nodes subtree, so a refresh
+  // landing mid-word destroys the very element being typed into and the text is lost.
+  const a=document.activeElement;
+  if(a && (a.isContentEditable || a.tagName==='INPUT' || a.tagName==='TEXTAREA' || a.tagName==='SELECT')) return true;
+  if(document.querySelector('.fb-text[contenteditable="true"]')) return true;
+  if(document.querySelector('.modal.open')) return true;      // a dialog is open: do not yank the board
+  return false;
+}
+
+/* 3-way merge: server doc is the base, my own changes (vs the doc I last synced)
+   are replayed on top. Two people moving different boxes both keep their work —
+   a plain last-write-wins save would silently discard one of them. */
+function mergeCanvas(server){
+  const mine=canvasDoc(), base=CV_BASE||{pos:{},boxes:[],links:[]};
+  const out=cloneDoc(server||{}); out.pos=out.pos||{}; out.boxes=out.boxes||[]; out.links=out.links||[]; out.ebends=out.ebends||{};
+  const be=base.ebends||{}, me=mine.ebends||{};
+  Object.keys(me).forEach(k=>{ if(JSON.stringify(me[k])!==JSON.stringify(be[k])) out.ebends[k]=me[k]; });
+  Object.keys(be).forEach(k=>{ if(!(k in me)) delete out.ebends[k]; });
+  const bp=base.pos||{};
+  Object.keys(mine.pos||{}).forEach(id=>{ if(JSON.stringify(mine.pos[id])!==JSON.stringify(bp[id])) out.pos[id]=mine.pos[id]; });
+  Object.keys(bp).forEach(id=>{ if(!(id in (mine.pos||{}))) delete out.pos[id]; });
+  ['boxes','links'].forEach(k=>{
+    const byId=a=>Object.fromEntries((a||[]).map(o=>[o.id,o]));
+    const m=byId(mine[k]), b=byId(base[k]), o=byId(out[k]);
+    Object.keys(m).forEach(id=>{ if(JSON.stringify(m[id])!==JSON.stringify(b[id])) o[id]=m[id]; });
+    Object.keys(b).forEach(id=>{ if(!(id in m)) delete o[id]; });
+    out[k]=Object.values(o);
+  });
+  return out;
+}
+async function pullCanvas(){
+  if(!apiMode()) return;
+  CV_SYNCED=false;
+  try{
+    const r=await api('/canvas'+boardParam()); CV_VERSION=r.version;
+    if(docEmpty(r.data) && !docEmpty(canvasDoc())){
+      CV_BASE={pos:{},boxes:[],links:[]};        // server blank → seed it from this browser
+      await pushCanvas();
+    }else{
+      applyCanvasDoc(r.data||{}); CV_BASE=cloneDoc(canvasDoc());
+    }
+    CV_SYNCED=true; CV_ERR=null; CV_LASTOK=Date.now(); renderSync();   // only now is it safe to write back
+  }catch(e){ CV_ERR='could not reach the server'; renderSync(); /* keep working off the local copy — but never write it back */ }
+}
+function scheduleCanvasPush(){ if(CV_LOADING) return; clearTimeout(CV_TIMER); CV_TIMER=setTimeout(()=>{ CV_TIMER=null; pushCanvas(); }, 700); renderSync(); }
+async function pushCanvas(){
+  if(!apiMode()||CV_LOADING) return;
+  // Never push a canvas we never successfully loaded. pullCanvas() swallows its errors,
+  // so a failed pull used to leave an empty canvas in memory that the next save wrote
+  // straight over the server — that is how a real connector was destroyed on 2026-08-31.
+  // (An emptiness check is NOT enough: positions survived, only the links were gone.)
+  if(!CV_SYNCED){ console.warn('canvas push blocked — this board was never loaded'); return; }
+  // No-op guard. Any caller that schedules a push without changing anything would
+  // otherwise bump the server version on every idle render — and in a SECOND open
+  // session that lands as a stale overwrite of whatever the other person just dragged.
+  if(CV_BASE && !CV_INTENT && JSON.stringify(canvasDoc())===JSON.stringify(CV_BASE)) return;
+  // Mass-loss guard: never silently drop content relative to the last synced copy.
+  // Real deletions call delLink/delBox/delSelection, which set CV_INTENT.
+  if(CV_BASE && !CV_INTENT){
+    const now=canvasDoc();
+    const lost = k => ((CV_BASE[k]||[]).length) - ((now[k]||[]).length);
+    if(lost('links')>0 || lost('boxes')>0 ||
+       Object.keys(CV_BASE.pos||{}).length - Object.keys(now.pos||{}).length > 0){
+      console.warn('canvas push blocked — would remove content that was not deleted in this session',
+        {links:lost('links'), boxes:lost('boxes')});
+      return;
+    }
+  }
+  CV_INTENT=false;
+  if(CV_PUSHING){ CV_AGAIN=true; return; }
+  CV_PUSHING=true;
+  try{
+    let doc=canvasDoc(), r;
+    try{
+      r=await api('/canvas'+boardParam(),{method:'PUT',body:JSON.stringify({data:doc,version:CV_VERSION})});
+    }catch(e){
+      if(!/canvas-conflict/.test(e.message)) throw e;
+      const s=await api('/canvas'+boardParam());          // someone else saved first
+      applyCanvasDoc(mergeCanvas(s.data||{})); CV_VERSION=s.version; doc=canvasDoc();
+      r=await api('/canvas'+boardParam(),{method:'PUT',body:JSON.stringify({data:doc,version:CV_VERSION})});
+      render();
+    }
+    CV_VERSION=r.version; CV_BASE=cloneDoc(doc); CV_ERR=null; CV_LASTOK=Date.now();
+  }catch(e){ CV_ERR = /conflict/i.test(e.message||'') ? 'save clashed with another session' : 'could not reach the server'; }
+  finally{ CV_PUSHING=false; renderSync(); if(CV_AGAIN){ CV_AGAIN=false; scheduleCanvasPush(); } }
+}
+/* pick up teammates' changes — only when idle, so it never yanks the board mid-edit */
+setInterval(async ()=>{
+  if(!apiMode()||CV_PUSHING||CV_TIMER||busyEditing()||SELSET.size||SELLINK) return;
+  try{
+    const r=await api('/canvas'+boardParam());
+    if(r.version!==CV_VERSION){ applyCanvasDoc(r.data||{}); CV_VERSION=r.version; CV_BASE=cloneDoc(canvasDoc()); render(); }
+  }catch(e){}
+}, 20000);
+function isSel(id){ return SELSET.has(id); }
+function snapVal(v){ return SNAP ? Math.round(v/GRID)*GRID : v; }
+function snapState(){ return JSON.stringify({b:CANVAS.boxes, l:CANVAS.links, e:CANVAS.ebends||{}, p:POSITIONS}); }
+function pushUndo(){ UNDO.push(snapState()); if(UNDO.length>60) UNDO.shift(); REDO.length=0; }
+function applyState(s){ const o=JSON.parse(s); CANVAS.boxes=o.b; CANVAS.links=o.l; CANVAS.ebends=o.e||{}; POSITIONS=o.p; saveAll(); render(); }
+/* Org edits (rating / tags / position fields) can't undo via whole-state snapshots the
+   way the canvas does: in hosted mode a local restore is overwritten by the next server
+   refresh. So they record an INVERSE PATCH, replayed through the same path as a normal
+   edit. Undo entries are polymorphic — string = canvas snapshot, object = org patch. */
+function pushOrgUndo(id, patch){ UNDO.push({id, patch}); if(UNDO.length>60) UNDO.shift(); REDO.length=0; }
+function orgSnapshot(id, keys){
+  const f=findNode(id); if(!f) return null; const n=f.node, o={};
+  keys.forEach(k=> o[k] = k==='tags' ? [...(n.tags||[])] : (n[k]===undefined?null:n[k]));
+  return o;
+}
+function applyOrgPatch(id, patch){
+  const f=findNode(id); if(!f||!patch) return;
+  if(apiMode()) return apiDo(()=>api('/nodes/'+id,{method:'PATCH',body:JSON.stringify(patch)}));
+  const n=f.node;
+  if('rag' in patch && n.rag!==patch.rag)
+    (n.notes=n.notes||[]).push({author:user.name,at:nowISO(),body:`Status → ${patch.rag?ragLabel(patch.rag):'Unrated'}`,sys:true});
+  Object.assign(n, patch);
+  render(); if(selectedId===id) openNode(id);
+}
+/* Undo a delete: soft-deleted rows keep their ids, so restoring the batch brings the
+   node, its reports, their notes and history back exactly as they were. */
+async function restoreBatch(batch){
+  try{ await api('/nodes/restore/'+encodeURIComponent(batch),{method:'POST'}); await refreshTree(true); }
+  catch(e){ if(e.message!=='unauthorized') alert('Could not restore: '+e.message); }
+}
+async function reDelete(id){
+  try{ const r=await api('/nodes/'+id,{method:'DELETE'}); await refreshTree(true); return r.batch; }
+  catch(e){ if(e.message!=='unauthorized') alert('Server error: '+e.message); }
+}
+function undo(){
+  if(!UNDO.length) return;
+  const e=UNDO.pop();
+  if(typeof e==='string'){ REDO.push(snapState()); applyState(e); return; }
+  if(e.orgTree){ REDO.push({orgTree:JSON.stringify(state.org)}); state.org=JSON.parse(e.orgTree); render(); return; }
+  if(e.restoreBoard){ REDO.push({reDeleteBoard:e.restoreBoard}); return restoreBoardById(e.restoreBoard); }
+  if(e.reDeleteBoard){ REDO.push({restoreBoard:e.reDeleteBoard}); return api('/boards/'+e.reDeleteBoard,{method:'DELETE'}).then(async()=>{ BOARD=null; await loadBoards(); if(BOARD) await switchBoard(BOARD.id); }).catch(()=>{}); }
+  if(e.restore){ REDO.push({reDelete:e.id}); return restoreBatch(e.restore); }
+  if(e.reDelete){ return reDelete(e.reDelete).then(b=>{ if(b) REDO.push({restore:b, id:e.reDelete}); }); }
+  const cur=orgSnapshot(e.id, Object.keys(e.patch));
+  if(cur) REDO.push({id:e.id, patch:cur});
+  return applyOrgPatch(e.id, e.patch);      // returned so callers can await the server round-trip
+}
+function redo(){
+  if(!REDO.length) return;
+  const e=REDO.pop();
+  if(typeof e==='string'){ UNDO.push(snapState()); applyState(e); return; }
+  if(e.orgTree){ UNDO.push({orgTree:JSON.stringify(state.org)}); state.org=JSON.parse(e.orgTree); render(); return; }
+  if(e.reDeleteBoard){ UNDO.push({restoreBoard:e.reDeleteBoard}); return api('/boards/'+e.reDeleteBoard,{method:'DELETE'}).then(async()=>{ BOARD=null; await loadBoards(); if(BOARD) await switchBoard(BOARD.id); }).catch(()=>{}); }
+  if(e.restoreBoard){ UNDO.push({reDeleteBoard:e.restoreBoard}); return restoreBoardById(e.restoreBoard); }
+  if(e.reDelete){ return reDelete(e.reDelete).then(b=>{ if(b) UNDO.push({restore:b, id:e.reDelete}); }); }
+  if(e.restore){ UNDO.push({reDelete:e.id}); return restoreBatch(e.restore); }
+  const cur=orgSnapshot(e.id, Object.keys(e.patch));
+  if(cur) UNDO.push({id:e.id, patch:cur});
+  return applyOrgPatch(e.id, e.patch);
+}
+function toggleSnap(){ SNAP=!SNAP; const b=document.getElementById('snap-btn'); if(b) b.classList.toggle('btn-accent',SNAP); }
+function boxRect(id){
+  const fb=CANVAS.boxes.find(b=>b.id===id);
+  if(fb) return {x:fb.x, y:fb.y, w:fb.w||170, h:fb.h||60};
+  const p=POSITIONS[id];
+  return p ? {x:p.x, y:p.y, w:NW, h:NH} : null;
+}
+function centerOf(r){ return {x:r.x+r.w/2, y:r.y+r.h/2}; }
+/* midpoint of one side — for a diamond/hexagon these land exactly on its vertices */
+function sidePt(r,s){ return s==='t'?{x:r.x+r.w/2,y:r.y} : s==='b'?{x:r.x+r.w/2,y:r.y+r.h}
+                           : s==='l'?{x:r.x,y:r.y+r.h/2} : {x:r.x+r.w,y:r.y+r.h/2}; }
+function edgePoint(r, tx2, ty2){ const c=centerOf(r), dx=tx2-c.x, dy=ty2-c.y; if(!dx&&!dy) return c;
+  const s=Math.min(dx?(r.w/2)/Math.abs(dx):1e9, dy?(r.h/2)/Math.abs(dy):1e9); return {x:c.x+dx*s, y:c.y+dy*s}; }
+/* Geometry for a connector. `bend` = offset of the curve's midpoint from the straight
+   midpoint, stored in canvas coords so it survives box moves/zoom. Control point sits at
+   mid + 2*bend, which makes a quadratic Bézier pass exactly through the dragged point. */
+/* ============================ CONNECTOR ROUTER ============================
+   Rebuilt 2026-08-31 after an audit found six failure modes in the old elbow:
+   same-row links collapsed to a zero-length segment (so they ran straight through
+   whatever was between the boxes and the drag control did nothing), self-links
+   drew nothing, deleted targets left invisible orphans, the stub overshot when
+   boxes were close, stored lanes were absolute so they broke when a box moved,
+   and overlapping boxes produced meaningless stubs.
+
+   How it works now: generate several candidate orthogonal routes, score each on
+   (boxes crossed, number of bends, length) and draw the winner. So a link avoids
+   other boxes BY DEFAULT — dragging is only needed when you want a different
+   route, not to make it legible. A manual bend is stored RELATIVE to the two
+   boxes, so it survives them being moved.
+   ========================================================================= */
+const STUB = 26;                       // how far a line leaves a box before turning
+function _dir(s){ return s==='r'?{x:1,y:0} : s==='l'?{x:-1,y:0} : s==='t'?{x:0,y:-1} : {x:0,y:1}; }
+function _horiz(s){ return s==='r'||s==='l'; }
+
+/* every other visible box counts as an obstacle */
+function routingObstacles(exclude){
+  const out=[];
+  (VIS||[]).forEach(n=>{ if(exclude.has(n.id)) return; const r=boxRect(n.id); if(r) out.push(r); });
+  (CANVAS.boxes||[]).forEach(x=>{ if(exclude.has(x.id)) return; const r=boxRect(x.id); if(r) out.push(r); });
+  return out;
+}
+function _segHits(x1,y1,x2,y2,rects){
+  const pad=3, lo_x=Math.min(x1,x2)-pad, hi_x=Math.max(x1,x2)+pad,
+        lo_y=Math.min(y1,y2)-pad, hi_y=Math.max(y1,y2)+pad;
+  return rects.some(r=> !(r.x>hi_x || r.x+r.w<lo_x || r.y>hi_y || r.y+r.h<lo_y));
+}
+function _crossings(pts,rects){
+  let n=0; for(let i=0;i<pts.length-1;i++) if(_segHits(pts[i].x,pts[i].y,pts[i+1].x,pts[i+1].y,rects)) n++;
+  return n;
+}
+function _clean(pts){                                  // drop duplicate + collinear points
+  const o=[];
+  for(const p of pts){ const q=o[o.length-1]; if(!q || Math.abs(q.x-p.x)>0.5 || Math.abs(q.y-p.y)>0.5) o.push(p); }
+  for(let i=1;i<o.length-1;i++){
+    const a=o[i-1],b=o[i],c=o[i+1];
+    if((Math.abs(a.x-b.x)<0.5&&Math.abs(b.x-c.x)<0.5)||(Math.abs(a.y-b.y)<0.5&&Math.abs(b.y-c.y)<0.5)){ o.splice(i,1); i--; }
+  }
+  return o;
+}
+function _len(pts){ let d=0; for(let i=0;i<pts.length-1;i++) d+=Math.abs(pts[i+1].x-pts[i].x)+Math.abs(pts[i+1].y-pts[i].y); return d; }
+function _d(pts){
+  let s=`M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1],b=pts[i];
+    s += (Math.abs(a.y-b.y)<0.5) ? ` H${b.x.toFixed(1)}` : (Math.abs(a.x-b.x)<0.5) ? ` V${b.y.toFixed(1)}` : ` L${b.x.toFixed(1)},${b.y.toFixed(1)}`;
+  }
+  return s;
+}
+/* midpoint of the drawn polyline — where the drag handle and label sit */
+function _mid(pts){
+  const total=_len(pts); let run=0;
+  for(let i=0;i<pts.length-1;i++){
+    const seg=Math.abs(pts[i+1].x-pts[i].x)+Math.abs(pts[i+1].y-pts[i].y);
+    if(run+seg>=total/2){ const t=seg?(total/2-run)/seg:0;
+      return {x:pts[i].x+(pts[i+1].x-pts[i].x)*t, y:pts[i].y+(pts[i+1].y-pts[i].y)*t}; }
+    run+=seg;
+  }
+  return pts[Math.floor(pts.length/2)];
+}
+/* a link that points at itself gets a small loop off its right edge */
+function _selfLoop(a){
+  const x=a.x+a.w, y0=a.y+a.h*0.3, y1=a.y+a.h*0.7, e=34;
+  const pts=[{x,y:y0},{x:x+e,y:y0},{x:x+e,y:y1},{x,y:y1}];
+  return {pts, p1:pts[0], p2:pts[pts.length-1]};
+}
+/* build one candidate route for a given pair of exit/entry sides, optionally via a lane */
+function _candidate(a,b,es,ns,lane){
+  const p1=sidePt(a,es), p2=sidePt(b,ns), d1=_dir(es), d2=_dir(ns);
+  // stub never overshoots: clamp to half the clear gap between the two boxes
+  const gapX=Math.max(0, (d1.x>0? b.x-(a.x+a.w) : a.x-(b.x+b.w)));
+  const gapY=Math.max(0, (d1.y>0? b.y-(a.y+a.h) : a.y-(b.y+b.h)));
+  const room=_horiz(es)?gapX:gapY;
+  const st=Math.max(8, Math.min(STUB, room>0? room/2 : STUB));
+  const s1={x:p1.x+d1.x*st, y:p1.y+d1.y*st};
+  const s2={x:p2.x+d2.x*st, y:p2.y+d2.y*st};
+  let mid=[];
+  if(lane!==undefined && lane!==null){
+    mid = _horiz(es) ? [{x:s1.x,y:lane},{x:s2.x,y:lane}] : [{x:lane,y:s1.y},{x:lane,y:s2.y}];
+  } else if(_horiz(es)===_horiz(ns)){
+    mid = _horiz(es) ? [{x:(s1.x+s2.x)/2,y:s1.y},{x:(s1.x+s2.x)/2,y:s2.y}]
+                     : [{x:s1.x,y:(s1.y+s2.y)/2},{x:s2.x,y:(s1.y+s2.y)/2}];
+  } else {
+    mid = _horiz(es) ? [{x:s2.x,y:s1.y}] : [{x:s1.x,y:s2.y}];
+  }
+  return _clean([p1,s1,...mid,s2,p2]);
+}
+function linkGeom(l){
+  const a=boxRect(l.from), b=boxRect(l.to);
+  if(!a||!b) return null;
+  if(l.from===l.to){ const s=_selfLoop(a); const m=_mid(s.pts);
+    return {d:_d(s.pts), p1:s.p1, p2:s.p2, hx:m.x, hy:m.y, flat:true, self:true}; }
+  const ca=centerOf(a), cb=centerOf(b), bend=l.bend;
+
+  // --- explicit curve (Shift-drag) ---
+  if(bend && bend.x!==undefined){
+    const mid={x:(ca.x+cb.x)/2, y:(ca.y+cb.y)/2};
+    const cp={x:mid.x+2*bend.x, y:mid.y+2*bend.y};
+    const p1=l.fromSide?sidePt(a,l.fromSide):edgePoint(a,cp.x,cp.y), p2=edgePoint(b,cp.x,cp.y);
+    return {d:`M${p1.x.toFixed(1)},${p1.y.toFixed(1)} Q${cp.x.toFixed(1)},${cp.y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`,
+            p1,p2,flat:false, hx:0.25*p1.x+0.5*cp.x+0.25*p2.x, hy:0.25*p1.y+0.5*cp.y+0.25*p2.y};
+  }
+
+  // OVER-THE-TOP: a deliberate straight line across the chart, ignoring what it crosses.
+  // Flow tools give you both; sometimes the crossing IS the point (it shows the tangle).
+  if(l.route==='over'){
+    const p1=l.fromSide?sidePt(a,l.fromSide):edgePoint(a,cb.x,cb.y), p2=edgePoint(b,ca.x,ca.y);
+    return {d:`M${p1.x.toFixed(1)},${p1.y.toFixed(1)} L${p2.x.toFixed(1)},${p2.y.toFixed(1)}`,
+            p1,p2,flat:true,over:true,hx:(p1.x+p2.x)/2,hy:(p1.y+p2.y)/2};
+  }
+  const obst=routingObstacles(new Set([l.from,l.to]));
+  const horizPref = Math.abs(cb.x-ca.x) >= Math.abs(cb.y-ca.y);
+  const es0 = l.fromSide || (horizPref ? (ca.x<cb.x?'r':'l') : (ca.y<cb.y?'b':'t'));
+
+  // --- manual lane: stored RELATIVE to the two boxes so it survives them moving ---
+  if(bend && bend.rel!==undefined && (!bend.axis || bend.axis===(_horiz(es0)?'y':'x'))){
+    const base=_horiz(es0)?(ca.y+cb.y)/2:(ca.x+cb.x)/2;
+    const lane=base+bend.rel;
+    const ns=_horiz(es0) ? (lane<cb.y?'t':'b') : (lane<cb.x?'l':'r');
+    const pts=_candidate(a,b,es0,ns,lane); const m=_mid(pts);
+    return {d:_d(pts), p1:pts[0], p2:pts[pts.length-1], hx:m.x, hy:m.y, flat:true, lane};
+  }
+
+  // --- automatic: try candidates, keep the one that crosses fewest boxes ---
+  const entryFor = (es)=> _horiz(es) ? (ca.x<cb.x?'l':'r') : (ca.y<cb.y?'t':'b');
+  const cands=[];
+  const sides = l.fromSide ? [l.fromSide] : (horizPref ? [es0, ca.y<cb.y?'b':'t'] : [es0, ca.x<cb.x?'r':'l']);
+  sides.forEach(es=>{
+    [entryFor(es), _horiz(es)?(ca.y<cb.y?'t':'b'):(ca.x<cb.x?'l':'r')].forEach(ns=>{
+      cands.push(_candidate(a,b,es,ns));                                  // plain elbow
+      const base=_horiz(es)?(ca.y+cb.y)/2:(ca.x+cb.x)/2;
+      for(const off of [-260,-190,-130,-85,85,130,190,260])               // lane variants
+        cands.push(_candidate(a,b,es,_horiz(es)?(base+off<cb.y?'t':'b'):(base+off<cb.x?'l':'r'), base+off));
+    });
+  });
+  let best=null, bestScore=Infinity;
+  for(const pts of cands){
+    const score = _crossings(pts,obst)*10000 + (pts.length-2)*120 + _len(pts)*0.01;
+    if(score<bestScore){ bestScore=score; best=pts; }
+  }
+  const m=_mid(best);
+  return {d:_d(best), p1:best[0], p2:best[best.length-1], hx:m.x, hy:m.y, flat:true,
+          crossings:_crossings(best,obst)};
+}
+const SHAPES={
+  rect:    {label:'▭ Process'},
+  round:   {label:'⬭ Start / End'},
+  circle:  {label:'○ Connector'},
+  diamond: {label:'◇ Decision',    d:'M50,1 L99,50 L50,99 L1,50 Z'},
+  data:    {label:'▱ Data (I/O)',  d:'M22,2 L99,2 L78,98 L1,98 Z'},
+  hex:     {label:'⬡ Preparation', d:'M16,2 L84,2 L99,50 L84,98 L16,98 L1,50 Z'},
+  doc:     {label:'🗎 Document',   d:'M2,2 H98 V82 Q74,100 50,88 T2,92 Z'},
+  db:      {label:'⛁ Database',    d:'M2,14 C2,7 24,2 50,2 C76,2 98,7 98,14 V86 C98,93 76,98 50,98 C24,98 2,93 2,86 Z M2,14 C2,21 24,26 50,26 C76,26 98,21 98,14'},
+  // --- critique layer: draw these OVER the chart to mark what you are calling out ---
+  lasso:   {label:'▭ Critique lasso', d:'M9,2 H91 A7,7 0 0 1 98,9 V91 A7,7 0 0 1 91,98 H9 A7,7 0 0 1 2,91 V9 A7,7 0 0 1 9,2 Z',
+            fill:'none', stroke:3, note:'outline only — hugs a block of people at any width'},
+  ring:    {label:'◯ Critique ring', d:'M50,2 C77,2 98,23 98,50 C98,77 77,98 50,98 C23,98 2,77 2,50 C2,23 23,2 50,2 Z',
+            fill:'none', stroke:3, note:'outline only — lasso the people the finding is about'},
+  callout: {label:'💬 Callout',      d:'M2,2 H98 V98 H2 Z', solidFill:true,
+            note:'the finding itself — link it to a ring and the line renders as a tail'}
+};
+function shapeSvg(b,col){
+  const sp=SHAPES[b.shape||'rect']; if(!sp||!sp.d) return '';
+  const stroke=col||'var(--accent)';
+  const fill = sp.fill==='none' ? 'none'
+             : sp.solidFill     ? (col?hexA(col,0.16):'var(--panel2)')
+             : (col?hexA(col,0.13):'var(--panel2)');
+  const w = sp.stroke||1.5;
+  return `<svg class="fb-shape" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${sp.d}" vector-effect="non-scaling-stroke" style="stroke:${stroke};fill:${fill};stroke-width:${w}${col?';stroke-dasharray:none':''}"/></svg>`;
+}
+function boxShapeOf(id){ const b=CANVAS.boxes.find(x=>x.id===id); return b? (b.shape||'rect') : null; }
+function setBoxShape(id,shape){ pushUndo(); const b=CANVAS.boxes.find(x=>x.id===id);
+  if(b){ b.shape=shape;
+    if(shape==='lasso'||shape==='ring') bindMarkMembers(id);   // becomes ABOUT the people it covers
+    else { delete b.members; }
+    if(shape==='callout') rebindCalloutAnchor(id);
+    saveCanvas(); render(); } }
+function freeboxHTML(b){
+  const selected = isSel(b.id), single = selected && SELSET.size===1;
+  const shape = b.shape||'rect', sp=SHAPES[shape]||SHAPES.rect, svgShape = !!sp.d;
+  const cls='freebox '+shape+' '+(svgShape?'shaped ':'')+(selected?'selbox ':'')+(CONNSRC===b.id?'conn-src ':'');
+  const col=safeColor(b.color||'');
+  // SVG shapes carry their own fill/stroke; only plain div shapes take the CSS colour
+  const colStyle = (col && !svgShape) ? `;border-color:${col};border-style:solid;background:${hexA(col,0.13)}` : '';
+  const sizeStyle = svgShape ? `height:${(b.h||60)}px` : `min-height:${(b.h||60)}px`;
+  const shapeOpts = Object.keys(SHAPES).map(k=>`<option value="${k}"${shape===k?' selected':''}>${SHAPES[k].label}</option>`).join('');
+  const extra = single ? `
+    <input type="color" class="fb-color" value="${col||'#8b5cf6'}" title="Box colour — pick any" onmousedown="event.stopPropagation()" oninput="previewBoxColor('${b.id}',this.value)" onchange="setBoxColor('${b.id}',this.value)">
+    <select class="fb-shape-sel" title="Shape" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()" onchange="setBoxShape('${b.id}',this.value)">${shapeOpts}</select>
+    <span class="fb-resize" onmousedown="startResize(event,'${b.id}')"></span>` : '';
+  return `<div class="${cls}" data-box="${b.id}" ondblclick="editBox('${b.id}')" style="left:${b.x}px;top:${b.y}px;width:${(b.w||170)}px;${sizeStyle}${colStyle}">
+    ${shapeSvg(b,col)}
+    <div class="fb-text">${esc(b.text)}</div>
+    <button class="fb-del" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();delOneBox('${b.id}')">×</button>
+    <div class="conn-handle t" title="Drag to connect" onmousedown="startLink(event,'${b.id}','t')"></div><div class="conn-handle r" title="Drag to connect" onmousedown="startLink(event,'${b.id}','r')"></div><div class="conn-handle b" title="Drag to connect" onmousedown="startLink(event,'${b.id}','b')"></div><div class="conn-handle l" title="Drag to connect" onmousedown="startLink(event,'${b.id}','l')"></div>
+    ${extra}
+  </div>`;
+}
+function linkToolbarHTML(){
+  if(!SELLINK) return '';
+  const l=CANVAS.links.find(x=>x.id===SELLINK); if(!l) return '';
+  const g=linkGeom(l); if(!g) return '';
+  const mx=g.hx, my=g.hy+22;                 // just below the pull handle, so it never covers it
+  return `<div class="linkbar" style="left:${mx.toFixed(0)}px;top:${my.toFixed(0)}px" onmousedown="event.stopPropagation()">
+    <input type="color" value="${l.color||'#6366f1'}" title="Line colour" oninput="previewLinkColor('${l.id}',this.value)" onchange="setLinkColor('${l.id}',this.value)">
+    <button title="Curve / straighten this line" onclick="toggleLinkCurve('${l.id}')">${(l.bend&&l.bend.x!==undefined)?'⟶':'⟿'}</button>
+    <button title="Auto-route — let it find a clear path around the boxes" onclick="resetBend('${l.id}')">⤺</button>
+    <button title="Arrows — click to cycle: to · from · both · none" onclick="cycleLinkArrows('${l.id}')">${ {end:'→', start:'←', both:'↔', none:'—'}[l.arrows||'end'] }</button>
+    <button title="Reporting line / communication line (work given directly)" onclick="toggleLinkKind('${l.id}')">${(l.kind==='comm')?'⇢':'│'}</button>
+    <button title="Route around boxes / straight over the top" onclick="toggleLinkRoute('${l.id}')">${(l.route==='over')?'╱':'⌐'}</button>
+    <button title="Dashed / solid" onclick="toggleLinkDash('${l.id}')">${l.dashed?'⋯':'—'}</button>
+    <button title="Add label" onclick="editLink('${l.id}')">🏷</button>
+    <button title="Delete line" onclick="delLink('${l.id}')">×</button>
+  </div>`;
+}
+function addBox(shape){
+  pushUndo();
+  const cx=(canvas.clientWidth/2 - tx)/scale, cy=(canvas.clientHeight/2 - ty)/scale;
+  const id='fb'+Date.now();
+  const sp=SHAPES[shape]||null;
+  const outline = shape==='lasso'||shape==='ring';        // these frame people, so start bigger
+  const w = outline?320:(shape==='callout'?300:170), h = outline?160:(shape==='callout'?90:60);
+  const box={id, text: outline?'':'New box', x:Math.round(cx-w/2), y:Math.round(cy-h/2), w, h};
+  if(shape && shape!=='rect') box.shape=shape;
+  CANVAS.boxes.push(box);
+  SELSET=new Set([id]); SELLINK=null; saveCanvas(); render();
+  if(outline){ bindMarkMembers(id); saveCanvas(); render(); }   // a lasso means whoever it covers
+  else setTimeout(()=>editBox(id), 20);
+}
+function delBox(id){ intentionalRemoval(); CANVAS.boxes=CANVAS.boxes.filter(b=>b.id!==id); CANVAS.links=CANVAS.links.filter(l=>l.from!==id&&l.to!==id); SELSET.delete(id); }
+function delOneBox(id){ pushUndo(); delBox(id); saveCanvas(); render(); }
+function delSelection(){ if(!SELSET.size) return; pushUndo(); intentionalRemoval(); [...SELSET].forEach(delBox); SELSET.clear(); saveCanvas(); render(); }
+function duplicateSel(){
+  if(!SELSET.size) return; pushUndo();
+  const map={}, ns=new Set(); let k=0;
+  [...SELSET].forEach(id=>{ const b=CANVAS.boxes.find(x=>x.id===id); if(!b) return;
+    const nid='fb'+Date.now()+'_'+(k++); map[id]=nid; CANVAS.boxes.push({...b, id:nid, x:b.x+24, y:b.y+24}); ns.add(nid); });
+  CANVAS.links.slice().forEach(l=>{ if(map[l.from]&&map[l.to]) CANVAS.links.push({...l, id:'lk'+Date.now()+'_'+(k++), from:map[l.from], to:map[l.to]}); });
+  SELSET=ns; SELLINK=null; saveCanvas(); render();
+}
+function nudge(dx,dy){ if(!SELSET.size) return; pushUndo(); SELSET.forEach(id=>{ const b=CANVAS.boxes.find(x=>x.id===id); if(b){ b.x+=dx; b.y+=dy; } }); saveCanvas(); render(); }
+function editBox(id){
+  const el=document.querySelector(`.freebox[data-box="${id}"] .fb-text`); if(!el) return;
+  const before=snapState();
+  el.contentEditable='true'; el.focus();
+  const rng=document.createRange(); rng.selectNodeContents(el); const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(rng);
+  el.onblur=()=>{ el.contentEditable='false'; const b=CANVAS.boxes.find(x=>x.id===id); const t=(el.textContent.trim()||'Box'); if(b && b.text!==t){ UNDO.push(before); REDO.length=0; b.text=t; saveCanvas(); } el.onblur=null; render(); };
+}
+function selectLink(id){ SELLINK=id; SELSET.clear(); render(); }
+function previewBoxColor(id,color){
+  const el=document.querySelector(`.freebox[data-box="${id}"]`); if(!el) return;
+  const path=el.querySelector('.fb-shape path');
+  if(path){ path.style.stroke=color; path.style.fill=hexA(color,0.13); path.style.strokeDasharray='none'; }
+  else { el.style.borderColor=color; el.style.borderStyle='solid'; el.style.background=hexA(color,0.13); }
+}
+function setBoxColor(id,color){ pushUndo(); const b=CANVAS.boxes.find(x=>x.id===id); if(b){ b.color=color; saveCanvas(); render(); } }
+function delLink(id){ pushUndo(); intentionalRemoval(); CANVAS.links=CANVAS.links.filter(l=>l.id!==id); if(SELLINK===id)SELLINK=null; saveCanvas(); render(); }
+function previewLinkColor(id,c){ const p=document.querySelector(`#edges path[data-link="${id}"]`); if(p) p.style.stroke=c; }
+function setLinkColor(id,c){ pushUndo(); const l=CANVAS.links.find(x=>x.id===id); if(l){ l.color=c; saveCanvas(); render(); } }
+/* arrows: end (default) → start → both → none → end */
+function cycleLinkArrows(id){
+  pushUndo(); const l=CANVAS.links.find(x=>x.id===id); if(!l) return;
+  const order=['end','start','both','none'];
+  l.arrows=order[(order.indexOf(l.arrows||'end')+1)%order.length];
+  saveCanvas(); render();
+}
+function setLinkArrows(id,mode){
+  pushUndo(); const l=CANVAS.links.find(x=>x.id===id); if(!l) return;
+  l.arrows=mode; saveCanvas(); render();
+}
+/* reporting line ⇄ communication line */
+function toggleLinkKind(id){
+  pushUndo(); const l=CANVAS.links.find(x=>x.id===id); if(!l) return;
+  l.kind = (l.kind==='comm') ? 'report' : 'comm';
+  if(l.kind==='comm'){ delete l.color; delete l.dashed; }
+  saveCanvas(); render();
+}
+/* auto-route around obstacles ⇄ straight over the top */
+function toggleLinkRoute(id){
+  pushUndo(); const l=CANVAS.links.find(x=>x.id===id); if(!l) return;
+  if(l.route==='over') delete l.route; else { l.route='over'; delete l.bend; }
+  saveCanvas(); render();
+}
+function toggleLinkDash(id){ pushUndo(); const l=CANVAS.links.find(x=>x.id===id); if(l){ l.dashed=!l.dashed; saveCanvas(); render(); } }
+function toggleLinkCurve(id){
+  pushUndo(); const l=CANVAS.links.find(x=>x.id===id); if(!l) return;
+  if(l.bend && l.bend.x!==undefined){ delete l.bend; }          // curve → elbow
+  else{                                                          // elbow → curve
+    const a=boxRect(l.from), b=boxRect(l.to);
+    if(a&&b){ const ca=centerOf(a), cb=centerOf(b), dx=cb.x-ca.x, dy=cb.y-ca.y, dist=Math.hypot(dx,dy)||1, k=Math.min(dist*0.16,80);
+      l.bend={x:-dy/dist*k, y:dx/dist*k}; }
+  }
+  delete l.curved; saveCanvas(); render(); }
+function resetBend(id){ pushUndo(); const l=CANVAS.links.find(x=>x.id===id); if(l){ delete l.bend; delete l.curved; delete l.fromSide; saveCanvas(); render(); } }
+/* ---- re-attach: drag either green endpoint onto a different box ---- */
+let REATT=null;
+function startReattach(e,id,end){ e.stopPropagation(); e.preventDefault(); REATT={id,end,snap:snapState()}; document.body.style.cursor='crosshair'; }
+function drawReattachLine(px,py){
+  const l=CANVAS.links.find(x=>x.id===REATT.id); if(!l) return;
+  const anchor=boxRect(REATT.end==='from' ? l.to : l.from); if(!anchor) return;
+  const a=edgePoint(anchor,px,py);
+  const svg=document.getElementById('edges'); let t=document.getElementById('templink');
+  if(!t){ t=document.createElementNS('http://www.w3.org/2000/svg','path'); t.id='templink'; t.setAttribute('stroke','#22c55e'); t.setAttribute('stroke-width','2'); t.setAttribute('stroke-dasharray','6 4'); t.setAttribute('fill','none'); svg.appendChild(t); }
+  t.setAttribute('d', `M${a.x.toFixed(1)},${a.y.toFixed(1)} L${px.toFixed(1)},${py.toFixed(1)}`);
+}
+window.addEventListener('mousemove', e=>{
+  if(!REATT) return;
+  const l=CANVAS.links.find(x=>x.id===REATT.id); if(!l) return;
+  const r=canvas.getBoundingClientRect();
+  drawReattachLine((e.clientX-r.left-tx)/scale, (e.clientY-r.top-ty)/scale);
+  document.querySelectorAll('.link-target').forEach(el=>el.classList.remove('link-target'));
+  const card=(document.elementFromPoint(e.clientX,e.clientY)||{}).closest?.('.node,.freebox');
+  const other = REATT.end==='from' ? l.to : l.from;
+  if(card && (card.dataset.id||card.dataset.box)!==other) card.classList.add('link-target');
+});
+window.addEventListener('mouseup', e=>{
+  if(!REATT) return;
+  const card=(document.elementFromPoint(e.clientX,e.clientY)||{}).closest?.('.node,.freebox');
+  const tgt=card&&(card.dataset.id||card.dataset.box);
+  const {id,end,snap}=REATT; REATT=null; document.body.style.cursor='';
+  document.querySelectorAll('.link-target').forEach(el=>el.classList.remove('link-target'));
+  removeTempLink();
+  const l=CANVAS.links.find(x=>x.id===id);
+  if(l && tgt){
+    const other = end==='from' ? l.to : l.from;
+    if(tgt!==other && tgt!==l[end]){
+      UNDO.push(snap); REDO.length=0;
+      l[end]=tgt; delete l.bend;      // old bend was relative to the old geometry
+      saveCanvas();
+    }
+  }
+  render();
+});
+
+/* ---- pull-to-reshape: grab a connector (or its handle) and drag to bend it ---- */
+let BEND=null;
+function startBend(e,id){ e.stopPropagation(); e.preventDefault(); if(SELLINK!==id) selectLink(id); BEND={id, curveMode:!!e.shiftKey, moved:false, snap:snapState()}; }
+function startEdgeBend(e,pid,cid){
+  e.stopPropagation(); e.preventDefault();
+  const k=edgeKey(pid,cid);
+  if(SELEDGE!==k){ SELEDGE=k; SELLINK=null; SELSET.clear(); render(); }
+  BEND={ekey:k, pid, cid, curveMode:!!e.shiftKey, moved:false, snap:snapState()};
+}
+function resetEdgeBend(pid,cid){
+  const k=edgeKey(pid,cid);
+  if(CANVAS.ebends && CANVAS.ebends[k]){ pushUndo(); delete CANVAS.ebends[k]; saveCanvas(); render(); }
+}
+window.addEventListener('mousemove', e=>{
+  if(!BEND) return;
+  let a,b,setBend;
+  if(BEND.ekey){
+    a=boxRect(BEND.pid); b=boxRect(BEND.cid); if(!a||!b) return;
+    setBend=v=>{ (CANVAS.ebends=CANVAS.ebends||{})[BEND.ekey] = BEND.curveMode ? {x:v.x,y:v.y} : {m:(ORIENT==='LR'?v.px:v.py)}; };
+  }else{
+    const l=CANVAS.links.find(x=>x.id===BEND.id); if(!l) return;
+    a=boxRect(l.from); b=boxRect(l.to); if(!a||!b) return;
+    setBend=v=>{
+      if(BEND.curveMode) l.bend={x:v.x, y:v.y};
+      else { const ca=centerOf(a), cb=centerOf(b);
+             const horiz = Math.abs(cb.x-ca.x)>=Math.abs(cb.y-ca.y);
+             const base = horiz ? (ca.y+cb.y)/2 : (ca.x+cb.x)/2;
+             l.bend = {rel:(horiz? v.py : v.px) - base, axis: horiz?'y':'x'}; }
+      delete l.curved;
+    };
+  }
+  if(!BEND.moved){ BEND.moved=true; UNDO.push(BEND.snap); REDO.length=0; }
+  const r=canvas.getBoundingClientRect();
+  const px=(e.clientX-r.left-tx)/scale, py=(e.clientY-r.top-ty)/scale;
+  const ca=centerOf(a), cb=centerOf(b);
+  setBend({x:px-(ca.x+cb.x)/2, y:py-(ca.y+cb.y)/2, px, py});   // elbow knee, or curve midpoint under the cursor
+  drawEdges();
+});
+window.addEventListener('mouseup', ()=>{ if(!BEND) return; const moved=BEND.moved; BEND=null; if(moved){ saveCanvas(); render(); } });
+function editLink(id){ const l=CANVAS.links.find(x=>x.id===id); if(!l) return; const t=prompt('Line label:', l.label||''); if(t!==null){ pushUndo(); l.label=t.trim(); saveCanvas(); render(); } }
+let RZ=null;
+function startResize(e,id){ e.stopPropagation(); e.preventDefault(); const b=CANVAS.boxes.find(x=>x.id===id); if(!b) return; RZ={id, sx:e.clientX, sy:e.clientY, w0:b.w||170, h0:b.h||60, snap:snapState()}; }
+window.addEventListener('mousemove', e=>{ if(!RZ) return; const b=CANVAS.boxes.find(x=>x.id===RZ.id); if(!b) return;
+  b.w=Math.max(90, snapVal(Math.round(RZ.w0+(e.clientX-RZ.sx)/scale))); b.h=Math.max(40, snapVal(Math.round(RZ.h0+(e.clientY-RZ.sy)/scale)));
+  const el=document.querySelector(`.freebox[data-box="${RZ.id}"]`); if(el){ el.style.width=b.w+'px'; if(el.classList.contains('shaped')) el.style.height=b.h+'px'; else el.style.minHeight=b.h+'px'; } drawEdges(); });
+window.addEventListener('mouseup', ()=>{ if(RZ){ UNDO.push(RZ.snap); REDO.length=0;
+  bindMarkMembers(RZ.id);          // you resized the ring: it now means whoever is inside it
+  saveCanvas(); RZ=null; } });
+function toggleConnect(){
+  CONNECT=!CONNECT; CONNSRC=null;
+  const b=document.getElementById('connect-btn'); if(b) b.classList.toggle('btn-accent',CONNECT);
+  // NOT a crosshair on the canvas itself — empty canvas still pans, and the cursor should say so.
+  canvas.classList.toggle('connect-mode', CONNECT);
+  const h=document.getElementById('connect-hint'); if(h) h.style.display=CONNECT?'block':'none';
+  render();
+}
+document.addEventListener('keydown', e=>{
+  // Enter on a single selected free box starts typing in it — the same as clicking it again.
+  if(e.key==='Enter' && !e.target.isContentEditable && e.target.tagName!=='INPUT'
+     && e.target.tagName!=='TEXTAREA' && SELSET && SELSET.size===1){
+    const bid=[...SELSET][0], b=CANVAS.boxes.find(x=>x.id===bid);
+    if(b && b.shape!=='lasso' && b.shape!=='ring'){ e.preventDefault(); editBox(bid); return; }
+  }
+  if(e.key==='Escape' && e.target.isContentEditable){ e.target.blur(); return; }
+  const ae=document.activeElement;
+  if(ae && (ae.isContentEditable || /INPUT|TEXTAREA/.test(ae.tagName))) return;
+  const mod=e.metaKey||e.ctrlKey;
+  if(mod && e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); return; }
+  if(mod && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); return; }
+  if(mod && e.key.toLowerCase()==='d'){ e.preventDefault(); duplicateSel(); return; }
+  if(e.key==='Delete'||e.key==='Backspace'){
+    if(SELLINK){ e.preventDefault(); delLink(SELLINK); }
+    else if(SELSET.size){ e.preventDefault(); delSelection(); }
+  } else if(e.key==='Escape'){ SELEDGE=null; if(CONNECT) toggleConnect(); if(LINKING){ LINKING=null; document.body.style.cursor=''; removeTempLink(); document.querySelectorAll('.link-target').forEach(el=>el.classList.remove('link-target')); } SELSET.clear(); SELLINK=null; render(); }
+  else if(e.key.indexOf('Arrow')===0 && SELSET.size){ e.preventDefault(); const s=e.shiftKey?10:1;
+    nudge(e.key==='ArrowLeft'?-s:e.key==='ArrowRight'?s:0, e.key==='ArrowUp'?-s:e.key==='ArrowDown'?s:0); }
+});
+
+/* tidy-tree coordinates for the whole tree (respects collapse). overwrite=true re-tidies everything. */
+function autoLayout(overwrite){
+  if(!state.org) return;
+  let cursor=0; const LR = ORIENT==='LR';
+  const stepSib = LR ? (NH+16) : (NW+GAPX);      // gap between siblings (cross axis)
+  const stepLvl = LR ? (NW+70) : (NH+GAPY);      // gap between depth levels
+  const mainOf = n => { const p=POSITIONS[n.id]; return p ? (LR?p.y:p.x) : 0; };
+  (function place(n, depth){
+    const kids = n._collapsed ? [] : (n.reports||[]);
+    let main;
+    if(!kids.length){ main=cursor*stepSib; cursor++; }
+    else { kids.forEach(k=>place(k, depth+1)); const ms=kids.map(mainOf); main=(Math.min(...ms)+Math.max(...ms))/2; }
+    if(overwrite || !POSITIONS[n.id]) POSITIONS[n.id] = LR ? {x:depth*stepLvl, y:main} : {x:main, y:depth*stepLvl};
+  })(state.org,0);
+}
+/* every node needs a position; brand-new nodes drop just below their parent */
+function ensurePositions(){
+  if(!state.org) return;
+  // Only write when we actually assigned something. This ran on every render, so a plain
+  // pan or zoom used to PUT the whole canvas to the server and bump its version.
+  let added=false;
+  if(!Object.keys(POSITIONS).length){ autoLayout(true); added=true; }
+  else (function w(n,parent){
+    if(!POSITIONS[n.id]){ const pp=(parent&&POSITIONS[parent.id])||{x:0,y:0};
+      POSITIONS[n.id] = ORIENT==='LR' ? {x:pp.x+NW+70, y:pp.y} : {x:pp.x, y:pp.y+NH+GAPY};
+      added=true; }
+    (n.reports||[]).forEach(c=>w(c,n));
+  })(state.org,null);
+  if(added) savePositions();
+}
+function retidy(){ pushUndo(); autoLayout(true); savePositions(); render(); fitView(); }
+
+function matchesFilter(n){
+  if(!FILTER || n.type!=='person') return true;
+  return FILTER.kind==='c' ? n.rag===FILTER.key : (n.tags||[]).includes(FILTER.key);
+}
+function nodeHTML(n){
+  const unit = isUnit(n);
+  const hex = n.rag ? colorOf(n.rag) : 'var(--line)';
+  const tint = n.rag ? hexA(colorOf(n.rag),0.12) : (unit?'var(--panel2)':'var(--panel)');
+  const chips = (n.tags||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('');
+  const sig = '';   // auto-signal chip retired 2026-09-05 — it moved on its own when a box moved, so it read as a finding without being one
+  const oa = openActions(n);
+  const oaPill = oa ? `<span class="chip" title="${oa} open action item(s)" style="background:#7f1d1d;color:#fecaca">⚡${oa}</span>` : '';
+  const costTxt = COST_ON ? `<span class="cnt">${fmtCost(unit?subtreeCost(n):n.cost)}</span>` : '';
+  const realNotes = (n.notes||[]).filter(x=>!x.sys).length;
+  const noteBadge = realNotes ? `<div class="badge">${realNotes}</div>` : '';
+  const hasKids = (n.reports||[]).length>0;
+  const kidCount = unit && hasKids ? `<span class="cnt">${n.reports.length}</span>` : '';
+  const toggle = hasKids ? `<button class="toggle" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();toggleCollapse('${n.id}')">${n._collapsed?'+':'−'}</button>` : '';
+  let cls='node '+(unit?'unit ':'')+(CONNSRC===n.id?'conn-src ':'');
+  if(FILTER && n.type==='person'){ cls += matchesFilter(n)?'hit ':'dim '; }
+  const p=POSITIONS[n.id]||{x:0,y:0};
+  return `<div class="${cls}" data-id="${n.id}" style="left:${p.x}px;top:${p.y}px;border-left-color:${hex};background:${tint}">
+      ${noteBadge}
+      <div class="nm">${esc(n.name)}</div>
+      <div class="tt">${esc(n.title||'')}</div>
+      <div class="meta"><span class="ent">${n.entity||''}</span>${chips}${sig}${oaPill}${kidCount}${costTxt}</div>
+      ${toggle}
+      <div class="conn-handle t" title="Drag to connect" onmousedown="startLink(event,'${n.id}','t')"></div><div class="conn-handle r" title="Drag to connect" onmousedown="startLink(event,'${n.id}','r')"></div><div class="conn-handle b" title="Drag to connect" onmousedown="startLink(event,'${n.id}','b')"></div><div class="conn-handle l" title="Drag to connect" onmousedown="startLink(event,'${n.id}','l')"></div>
+    </div>`;
+}
+function edgeKey(pid,cid){ return pid+'>'+cid; }
+/* Reporting lines default to the tidy right-angle elbow (the org-chart convention),
+   but can be pulled into a curve like any other connector — same bend model. */
+function orgEdgeGeom(pid,cid){
+  const a=boxRect(pid), b=boxRect(cid); if(!a||!b) return null;
+  const bend=(CANVAS.ebends||{})[edgeKey(pid,cid)];
+  // Elbow routing (the default, and what a drag adjusts): straight orthogonal
+  // segments with a movable knee. Only an explicit shift-drag makes a curve.
+  if(!bend || bend.m!==undefined){
+    const LR = ORIENT==='LR';
+    let d, hx, hy;
+    if(LR){ const x1=a.x+a.w, y1=a.y+a.h/2, x2=b.x, y2=b.y+b.h/2;
+      const mx = (bend&&bend.m!==undefined) ? bend.m : (x1+x2)/2;
+      d=`M${x1.toFixed(1)},${y1.toFixed(1)} H${mx.toFixed(1)} V${y2.toFixed(1)} H${x2.toFixed(1)}`; hx=mx; hy=(y1+y2)/2;
+    } else { const x1=a.x+a.w/2, y1=a.y+a.h, x2=b.x+b.w/2, y2=b.y;
+      const my = (bend&&bend.m!==undefined) ? bend.m : (y1+y2)/2;
+      d=`M${x1.toFixed(1)},${y1.toFixed(1)} V${my.toFixed(1)} H${x2.toFixed(1)} V${y2.toFixed(1)}`; hx=(x1+x2)/2; hy=my;
+    }
+    return {d, hx, hy, elbow:true};
+  }
+  const ca=centerOf(a), cb=centerOf(b), mid={x:(ca.x+cb.x)/2, y:(ca.y+cb.y)/2};
+  const cp={x:mid.x+2*bend.x, y:mid.y+2*bend.y};
+  const p1=edgePoint(a,cp.x,cp.y), p2=edgePoint(b,cp.x,cp.y);
+  return {d:`M${p1.x.toFixed(1)},${p1.y.toFixed(1)} Q${cp.x.toFixed(1)},${cp.y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`,
+          hx:0.25*p1.x+0.5*cp.x+0.25*p2.x, hy:0.25*p1.y+0.5*cp.y+0.25*p2.y, elbow:false};
+}
+function drawEdges(){
+  let paths='', maxX=0, maxY=0;
+  EDGES.forEach(([p,c])=>{ const g=orgEdgeGeom(p.id,c.id); if(!g) return;
+    const k=edgeKey(p.id,c.id);
+    paths+=`<path class="linkhit" d="${g.d}" onmousedown="startEdgeBend(event,'${p.id}','${c.id}')" ondblclick="resetEdgeBend('${p.id}','${c.id}')"><title>Drag to re-route (stays straight) · Shift-drag to curve · double-click to reset</title></path>`;
+    paths+=`<path class="orgedge${SELEDGE===k?' sel':''}" d="${g.d}"/>`;
+    if(SELEDGE===k) paths+=`<circle class="bendh" cx="${g.hx.toFixed(1)}" cy="${g.hy.toFixed(1)}" r="6" onmousedown="startEdgeBend(event,'${p.id}','${c.id}')" ondblclick="resetEdgeBend('${p.id}','${c.id}')"><title>Drag to re-route · Shift-drag to curve · double-click to reset</title></circle>`;
+  });
+  let links='';
+  CANVAS.links.forEach(l=>{ const g=linkGeom(l); if(!g) return;
+    // fat transparent strip = generous grab area; drag it anywhere to bend the line
+    links+=`<path class="linkhit" data-link="${l.id}" d="${g.d}" onmousedown="startBend(event,'${l.id}')" onclick="selectLink('${l.id}')" ondblclick="editLink('${l.id}')"><title>Drag to re-route around boxes (stays straight) · Shift-drag to curve · double-click to label</title></path>`;
+    // A line out of a CALLOUT is drawn as a solid tapering tail, the way a speech
+    // bubble points at its subject — not as an arrow.
+    if(boxShapeOf(l.from)==='callout'){
+      const src=CANVAS.boxes.find(x=>x.id===l.from)||{};
+      const col=safeColor(src.color)||'#94a3b8';
+      const dx=g.p2.x-g.p1.x, dy=g.p2.y-g.p1.y, len=Math.hypot(dx,dy)||1;
+      const ux=dx/len, uy=dy/len, nx=-uy, ny=ux;
+      /* short wedge off the callout + a thin leader the rest of the way — a full-length
+         wedge only reads as a speech tail when the target is adjacent */
+      const stub=Math.min(len, 58), half=Math.min(11, len/6);
+      const tx=g.p1.x+ux*stub, ty=g.p1.y+uy*stub;
+      links+=`<path class="tail" data-link="${l.id}" onclick="selectLink('${l.id}')" ondblclick="editLink('${l.id}')"
+        style="fill:${hexA(col,0.55)};stroke:none"
+        d="M${(g.p1.x+nx*half).toFixed(1)},${(g.p1.y+ny*half).toFixed(1)} L${(g.p1.x-nx*half).toFixed(1)},${(g.p1.y-ny*half).toFixed(1)} L${tx.toFixed(1)},${ty.toFixed(1)} Z"/>`;
+      if(len>stub+2) links+=`<path class="tail" data-link="${l.id}" onclick="selectLink('${l.id}')" ondblclick="editLink('${l.id}')"
+        style="fill:none;stroke:${hexA(col,0.55)};stroke-width:1.6;stroke-linecap:round"
+        d="M${tx.toFixed(1)},${ty.toFixed(1)} L${g.p2.x.toFixed(1)},${g.p2.y.toFixed(1)}"/>`;
+    } else {
+      const kind=l.kind||'report';
+      const ar = l.arrows || (kind==='comm' ? 'none' : 'end');
+      const mk=(ar==='none') ? '' :
+               (ar==='start') ? ' marker-start="url(#arrowback)"' :
+               (ar==='both')  ? ' marker-start="url(#arrowback)" marker-end="url(#arrow)"' :
+                                ' marker-end="url(#arrow)"';
+      // communication line = the work actually flowing, as opposed to who reports to whom
+      const st = kind==='comm'
+        ? `stroke:${safeColor(l.color)||'#9aa3ae'};stroke-width:1.2;opacity:.75`
+        : (safeColor(l.color) ? `stroke:${safeColor(l.color)}` : '');
+      const dash = kind==='comm' ? ' stroke-dasharray="3 4"' : (l.dashed?' stroke-dasharray="7 5"':'');
+      links+=`<path class="link ${kind==='comm'?'comm ':''}${SELLINK===l.id?'sel':''}" data-link="${l.id}"${mk}${st?` style="${st}"`:''}${dash} d="${g.d}"/>`;
+    }
+    if(SELLINK===l.id){
+      links+=`<circle class="bendh" cx="${g.hx.toFixed(1)}" cy="${g.hy.toFixed(1)}" r="6" onmousedown="startBend(event,'${l.id}')" ondblclick="resetBend('${l.id}')"><title>Drag to re-route · Shift-drag to curve · double-click to reset</title></circle>`;
+      links+=`<circle class="endh" cx="${g.p1.x.toFixed(1)}" cy="${g.p1.y.toFixed(1)}" r="6" onmousedown="startReattach(event,'${l.id}','from')"><title>Drag to move this end to another box</title></circle>`;
+      links+=`<circle class="endh" cx="${g.p2.x.toFixed(1)}" cy="${g.p2.y.toFixed(1)}" r="6" onmousedown="startReattach(event,'${l.id}','to')"><title>Drag to move this end to another box</title></circle>`;
+    }
+    if(l.label) links+=`<text class="linklabel" x="${g.hx.toFixed(1)}" y="${(g.hy-9).toFixed(1)}" onclick="selectLink('${l.id}')" ondblclick="editLink('${l.id}')">${esc(l.label)}</text>`;
+  });
+  VIS.forEach(n=>{ const q=POSITIONS[n.id]; if(q){ maxX=Math.max(maxX,q.x+NW); maxY=Math.max(maxY,q.y+NH); } });
+  CANVAS.boxes.forEach(b=>{ maxX=Math.max(maxX,b.x+(b.w||170)); maxY=Math.max(maxY,b.y+(b.h||60)); });
+  const defs='<defs>'
+    +'<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>'
+    +'<marker id="arrowback" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>'
+    +'</defs>';
+  const svg=document.getElementById('edges');
+  svg.setAttribute('width', maxX+160); svg.setAttribute('height', maxY+160);
+  svg.innerHTML = defs + paths + links;
+}
+function render(){
+  ensurePositions();
+  VIS=[]; EDGES=[];
+  if(state.org) (function w(n){ VIS.push(n); if(!n._collapsed) (n.reports||[]).forEach(c=>{ EDGES.push([n,c]); w(c); }); })(state.org);
+  document.getElementById('nodes').innerHTML = VIS.map(nodeHTML).join('') + CANVAS.boxes.map(freeboxHTML).join('') + linkToolbarHTML();
+  // marks re-seat themselves on their people before the tails are drawn, so a layout change
+  // (orientation, retidy, a drag, a tag that made a box taller) can never strand them
+  const marksMoved = reflowMarks();
+  drawEdges();
+  if(marksMoved) saveCanvas();   // debounced + no-op-guarded, so this is one write per real change
+  if(selectedId){ const el=document.querySelector(`.node[data-id="${selectedId}"]`); if(el) el.classList.add('sel'); }
+  renderStats();
+  renderMapLegend();
+  save();
+}
+function toggleCollapse(id){ const f=findNode(id); if(f){ f.node._collapsed=!f.node._collapsed; render(); } }
+function collapseAll(){ walk(state.org,n=>{ if(n!==state.org && (n.reports||[]).length) n._collapsed=true; }); render(); }
+function expandAll(){ walk(state.org,n=>{ n._collapsed=false; }); render(); }
+
+/* ---- seamless drag-to-connect: pull a line from a box's blue handle onto another box ---- */
+let LINKING=null;
+function startLink(e,id,side){ e.stopPropagation(); e.preventDefault(); LINKING={src:id,side:side||null,x:0,y:0}; document.body.style.cursor='crosshair'; }
+function drawTempLink(){
+  if(!LINKING) return; const a=boxRect(LINKING.src); if(!a) return;
+  const p1=LINKING.side ? sidePt(a,LINKING.side) : edgePoint(a, LINKING.x, LINKING.y);
+  const svg=document.getElementById('edges'); let p=document.getElementById('templink');
+  if(!p){ p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.id='templink'; p.setAttribute('stroke','#6366f1'); p.setAttribute('stroke-width','2'); p.setAttribute('stroke-dasharray','6 4'); p.setAttribute('fill','none'); svg.appendChild(p); }
+  p.setAttribute('d', `M${p1.x.toFixed(1)},${p1.y.toFixed(1)} L${LINKING.x.toFixed(1)},${LINKING.y.toFixed(1)}`);
+}
+function removeTempLink(){ const p=document.getElementById('templink'); if(p) p.remove(); }
+window.addEventListener('mousemove', e=>{
+  if(!LINKING) return;
+  const r=canvas.getBoundingClientRect();
+  LINKING.x=(e.clientX-r.left-tx)/scale; LINKING.y=(e.clientY-r.top-ty)/scale;
+  document.querySelectorAll('.link-target').forEach(el=>el.classList.remove('link-target'));
+  const under=document.elementFromPoint(e.clientX,e.clientY); const card=under&&under.closest('.node,.freebox');
+  if(card && (card.dataset.id||card.dataset.box)!==LINKING.src) card.classList.add('link-target');
+  drawTempLink();
+});
+window.addEventListener('mouseup', e=>{
+  if(!LINKING) return;
+  const under=document.elementFromPoint(e.clientX,e.clientY); const card=under&&under.closest('.node,.freebox');
+  const tgt=card&&(card.dataset.id||card.dataset.box); const src=LINKING.src, side=LINKING.side;
+  LINKING=null; document.body.style.cursor='';
+  document.querySelectorAll('.link-target').forEach(el=>el.classList.remove('link-target')); removeTempLink();
+  if(tgt && tgt!==src){
+    pushUndo(); CANVAS.links.push({id:'lk'+Date.now(), from:src, to:tgt, fromSide:side});
+    CONNSRC=null; saveCanvas(); render();
+  }
+});
+
+/* ---- drag a card to move it on the canvas (free layout); a click without moving opens the drawer ---- */
+(function(){
+  let id=null, isFree=false, moved, sx, sy, origins=null, dsnap=null;
+  const host=document.getElementById('nodes');
+  let wasSole=false;
+  host.addEventListener('mousedown', e=>{
+    if(e.target.isContentEditable) return;
+    const card=e.target.closest('.node, .freebox'); if(!card) return;
+    const boxId=card.dataset.id || card.dataset.box, free=!!card.dataset.box;
+    if(CONNECT){
+      e.stopPropagation(); e.preventDefault();
+      // second click of the click→click flow
+      if(CONNSRC && CONNSRC!==boxId){
+        pushUndo(); CANVAS.links.push({id:'lk'+Date.now(), from:CONNSRC, to:boxId});
+        CONNSRC=null; saveCanvas(); render(); return;
+      }
+      // otherwise start a real drag from this box — the crosshair implies dragging, so let it drag.
+      // Releasing on the same box (i.e. a plain click) leaves CONNSRC set, so click→click still works.
+      CONNSRC=boxId;
+      LINKING={src:boxId, side:null, x:0, y:0, fromConnect:true};
+      document.body.style.cursor='crosshair';
+      render(); return;
+    }
+    if(free && e.shiftKey){                          // shift-click toggles selection (no drag)
+      if(SELSET.has(boxId)) SELSET.delete(boxId); else SELSET.add(boxId);
+      SELLINK=null; render(); e.stopPropagation(); e.preventDefault(); return;
+    }
+    // Was it already the sole selection before this click? If so, and the click turns out not
+    // to be a drag, the user is asking to EDIT it — one click selects, the next enters the text.
+    // Before this, typing needed a double-click, which nothing on screen told you.
+    wasSole = free && SELSET.size===1 && SELSET.has(boxId);
+    if(free){ if(!SELSET.has(boxId)) SELSET=new Set([boxId]); SELLINK=null; }
+    id=boxId; isFree=free; moved=false; sx=e.clientX; sy=e.clientY; dsnap=snapState(); origins={};
+    if(free){ SELSET.forEach(s=>{ const b=CANVAS.boxes.find(x=>x.id===s); if(b) origins[s]={x:b.x,y:b.y}; }); }
+    else { const p=POSITIONS[boxId]||{x:0,y:0}; origins[boxId]={x:p.x,y:p.y}; }
+    card.classList.add('dragging'); e.stopPropagation(); e.preventDefault();
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!id) return;
+    const dx=(e.clientX-sx)/scale, dy=(e.clientY-sy)/scale;
+    if(Math.abs(dx)>3||Math.abs(dy)>3) moved=true;
+    if(isFree){
+      Object.keys(origins).forEach(s=>{ const b=CANVAS.boxes.find(x=>x.id===s); if(!b) return;
+        b.x=snapVal(origins[s].x+dx); b.y=snapVal(origins[s].y+dy);
+        const el=document.querySelector(`.freebox[data-box="${s}"]`); if(el){ el.style.left=b.x+'px'; el.style.top=b.y+'px'; } });
+    } else {
+      POSITIONS[id]={x:snapVal(origins[id].x+dx), y:snapVal(origins[id].y+dy)};
+      const el=document.querySelector(`.node[data-id="${id}"]`); if(el){ el.style.left=POSITIONS[id].x+'px'; el.style.top=POSITIONS[id].y+'px'; }
+    }
+    drawEdges();
+  });
+  window.addEventListener('mouseup', ()=>{
+    if(!id) return; const wasId=id, free=isFree, m=moved; id=null;
+    const card=document.querySelector(free?`.freebox[data-box="${wasId}"]`:`.node[data-id="${wasId}"]`); if(card) card.classList.remove('dragging');
+    if(m){ UNDO.push(dsnap); REDO.length=0;
+      if(free){
+        const b=CANVAS.boxes.find(x=>x.id===wasId);
+        // you dragged the mark itself, so the mark now means wherever you put it
+        if(b && (b.shape==='lasso'||b.shape==='ring')) bindMarkMembers(wasId);
+        if(b && b.shape==='callout') rebindCalloutAnchor(wasId);
+        saveCanvas();
+      } else savePositions();       // you dragged a PERSON — reflowMarks() re-seats the marks
+      render(); }
+    else if(free && wasSole){
+      // a click, not a drag, on a box that was ALREADY selected → the user wants to type in it.
+      // One click selects, the next enters the text. Before this, typing needed a double-click
+      // and nothing on screen said so.
+      const b=CANVAS.boxes.find(x=>x.id===wasId);
+      if(b && b.shape!=='lasso' && b.shape!=='ring') editBox(wasId); else render();
+    }
+    else { if(free) render(); else openNode(wasId); }
+    wasSole=false;
+  });
+})();
+
+/* ---------------- RE-PARENT (via the drawer's "Move under…" — drag now moves boxes freely) ---------------- */
+function reparent(id, targetId){
+  const f=findNode(id);
+  if(!f || !f.parent){ alert('Cannot move the top of the chart.'); return; }
+  let bad=false; walk(f.node,x=>{ if(x.id===targetId) bad=true; });
+  if(bad){ alert('Cannot drop a position onto itself or one of its own reports.'); return; }
+  if(apiMode()) return apiDo(()=>api('/nodes/'+id+'/move',{method:'PATCH',body:JSON.stringify({new_parent_id:targetId})}));
+  f.parent.reports = f.parent.reports.filter(r=>r.id!==id);
+  const t=findNode(targetId).node; (t.reports=t.reports||[]).push(f.node); t._collapsed=false;
+  render(); if(selectedId===id) openNode(id);
+}
+
+/* ---------------- STATS + FILTER ---------------- */
+function countByRag(root){ const c={}; let people=0; walk(root,n=>{ if(n.type!=='person')return; people++; const k=n.rag||'unrated'; c[k]=(c[k]||0)+1; }); return {c,people}; }
+function renderStats(){
+  const {c,people}=countByRag(state.org);
+  let open=0; walk(state.org,n=>{ open+=openActions(n); });
+  const order=['red','amber','green','blue','grey'];
+  // The counts were decoration you had to decode. Each is now a labelled, clickable filter —
+  // click "20 Problem" and the chart shows those twenty; click it again to clear.
+  const cur = FILTER ? FILTER.kind+':'+FILTER.key : '';
+  let html=`<div class="pill" style="background:transparent">${people} people</div>`;
+  order.forEach(k=>{ if(!c[k]) return;
+    const def=state.colors.find(x=>x.key===k)||{};
+    const on = cur==='c:'+k;
+    html+=`<div class="pill clickable${on?' on':''}" data-statfilter="c:${esc(k)}" title="${esc(def.label||k)} — ${esc(def.meaning||'')}${on?' (click to clear)':' · click to show only these'}"><span class="dot" style="background:${colorOf(k)}"></span>${c[k]}</div>`; });
+  if(c.unrated) html+=`<div class="pill" title="Not yet given a status"><span class="dot" style="background:var(--line)"></span>${c.unrated}</div>`;
+  if(open) html+=`<div class="pill" title="${open} open action item(s) across the chart"><span style="color:#fca5a5">⚡</span>${open}</div>`;
+  if(COST_ON) html+=`<div class="pill" title="Total monthly cost">${fmtCost(subtreeCost(state.org))}/mo</div>`;
+  document.getElementById('stats').innerHTML = html;
+}
+function refreshFilter(){
+  const sel=document.getElementById('filter');
+  let h=`<option value="">Filter: all</option><optgroup label="Colour">`;
+  state.colors.forEach(c=> h+=`<option value="c:${c.key}">${c.label}</option>`);
+  h+=`</optgroup><optgroup label="Tag">`;
+  tagList().forEach(t=> h+=`<option value="t:${esc(t)}">${esc(t)}</option>`);
+  h+=`</optgroup>`;
+  sel.innerHTML=h;
+}
+function applyFilter(){
+  const v=document.getElementById('filter').value;
+  FILTER = v ? {kind:v.split(':')[0], key:v.split(':')[1]} : null;
+  if(FILTER) expandAll(); else render();
+}
+function toggleCost(){ COST_ON=!COST_ON; document.getElementById('cost-btn').classList.toggle('btn-accent',COST_ON); render(); }
+
+/* ---------------- DASHBOARD ---------------- */
+function openDash(){
+  const entities=['HO','GOA','BLR','UNI'];
+  const names={HO:'Head Office — Mumbai',GOA:'Goa',BLR:'Bangalore',UNI:'Unitary'};
+  let html='';
+  entities.forEach(ent=>{
+    const nodes=[]; walk(state.org,n=>{ if(n.type==='person'&&n.entity===ent) nodes.push(n); });
+    const c={}; let cost=0; nodes.forEach(n=>{ const k=n.rag||'unrated'; c[k]=(c[k]||0)+1; cost+=Number(n.cost)||0; });
+    const total=nodes.length||1;
+    const order=['green','amber','red','blue','grey','unrated'];
+    const bar=order.map(k=>{ if(!c[k])return''; const col=k==='unrated'?'var(--line)':colorOf(k); return `<span style="width:${(c[k]/total*100).toFixed(1)}%;background:${col}"></span>`; }).join('');
+    const legend=order.filter(k=>c[k]).map(k=>`${c[k]} ${k}`).join(' · ');
+    html+=`<div class="cell"><b>${names[ent]}</b><div style="font-size:11px;color:var(--muted)">${nodes.length} people${cost?' · '+fmtCost(cost)+'/mo':''}</div><div class="bar">${bar}</div><div style="font-size:10px;color:var(--muted);margin-top:6px">${legend||'—'}</div></div>`;
+  });
+  document.getElementById('dash-body').innerHTML=html;
+  document.getElementById('dash').classList.add('open');
+}
+function closeDash(){ document.getElementById('dash').classList.remove('open'); }
+
+/* ---------------- TEAM / USERS (server mode, consultant only) ---------------- */
+async function openUsers(){
+  if(!apiMode()){ alert('Team logins are available in the hosted (server) version.'); return; }
+  try{
+    const list=await api('/users');
+    document.getElementById('user-list').innerHTML = list.map(u=>{
+      const canDel = u.email!=='admin@acmemep.local' && !(user&&u.email===user.email);
+      return `<div class="legrow"><div class="txt"><b>${esc(u.name)}</b> <span style="font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 5px;margin-left:4px">${u.role==='client_viewer'?'client':'team'}</span><div>${esc(u.email)}</div></div>${canDel?`<button class="del" title="Remove login" onclick="delUser('${u.id}')">×</button>`:''}</div>`;
+    }).join('') || '<div style="color:var(--muted);font-size:12px">No logins yet.</div>';
+    document.getElementById('users').classList.add('open');
+  }catch(e){ alert(/consultant/i.test(e.message)?'Only a consultant (admin) account can manage logins.':'Error: '+e.message); }
+}
+function closeUsers(){ document.getElementById('users').classList.remove('open'); }
+async function addUser(){
+  const name=document.getElementById('nu-name').value.trim();
+  const email=document.getElementById('nu-email').value.trim();
+  const password=document.getElementById('nu-pass').value;
+  const role=document.getElementById('nu-role').value;
+  if(!email||!password){ alert('Email and password are required.'); return; }
+  try{
+    await api('/users',{method:'POST',body:JSON.stringify({name,email,password,role})});
+    document.getElementById('nu-name').value=''; document.getElementById('nu-email').value=''; document.getElementById('nu-pass').value='';
+    openUsers();
+  }catch(e){ alert('Could not create login: '+e.message); }
+}
+async function delUser(id){
+  if(!confirm('Remove this login? Their past notes stay but show as “Unknown”.')) return;
+  try{ await api('/users/'+id,{method:'DELETE'}); openUsers(); }
+  catch(e){ alert('Error: '+e.message); }
+}
+
+/* ---------------- ACTION LIST REPORT ---------------- */
+let REPORT_ROWS=[];
+const SEV={red:0,blue:1,amber:2,grey:3};
+function openReport(){
+  const rows=[]; walk(state.org,n=>{ if(n.type==='person' && n.rag && n.rag!=='green') rows.push(n); });
+  rows.sort((a,b)=> ((SEV[a.rag]??9)-(SEV[b.rag]??9)) || (subtreeCost(b)-subtreeCost(a)) );
+  REPORT_ROWS=rows;
+  let html;
+  if(!rows.length){ html='<div style="color:var(--muted)">No rated problem positions yet — colour some nodes red / amber / blue and they will appear here.</div>'; }
+  else{
+    html='<table class="rpt"><thead><tr><th>Name</th><th>Role</th><th>Entity</th><th>Status</th><th>Tags</th><th>Cost/mo</th><th>Open</th><th>Recommended action</th></tr></thead><tbody>';
+    rows.forEach(n=>{ html+=`<tr>
+      <td><b>${esc(n.name)}</b></td>
+      <td>${esc(n.title||'')}</td>
+      <td>${n.entity||''}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:5px"><span class="dot" style="background:${colorOf(n.rag)}"></span>${esc(ragLabel(n.rag))}</span></td>
+      <td>${(n.tags||[]).join(', ')}</td>
+      <td>${fmtCost(n.cost)}</td>
+      <td>${openActions(n)||''}</td>
+      <td>${esc(suggestAction(n))}</td></tr>`; });
+    html+='</tbody></table>';
+  }
+  document.getElementById('report-body').innerHTML=html;
+  document.getElementById('report-count').textContent = rows.length ? '· '+rows.length+' positions' : '';
+  document.getElementById('report').classList.add('open');
+}
+function closeReport(){ document.getElementById('report').classList.remove('open'); }
+function csvCell(v){ v=(v==null?'':String(v)); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+function downloadReportCSV(){
+  const head=['Name','Role','Entity','Status','Tags','Cost (monthly)','Open actions','Recommended action'];
+  const lines=[head.join(',')];
+  REPORT_ROWS.forEach(n=>{ lines.push([n.name,n.title||'',n.entity||'',ragLabel(n.rag),(n.tags||[]).join('; '),Number(n.cost)||'',openActions(n),suggestAction(n)].map(csvCell).join(',')); });
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cb-action-list-'+nowISO().slice(0,10)+'.csv'; a.click();
+}
+function printReport(){ window.print(); }
+
+/* ---------------- DRAWER ---------------- */
+function openNode(id){
+  selectedId=id;
+  document.querySelectorAll('.node.sel').forEach(e=>e.classList.remove('sel'));
+  const el=document.querySelector(`.node[data-id="${id}"]`); if(el) el.classList.add('sel');
+  const n=findNode(id).node;
+  document.getElementById('dw-nm').textContent=n.name;
+  document.getElementById('dw-tt').textContent=(n.title?n.title+' · ':'')+(n.entity||'')+(n.type==='unit'?' · unit':'');
+  const swatches=state.colors.map(c=>`<div class="swatch ${n.rag===c.key?'on':''}" title="${esc(c.label)}: ${esc(c.meaning)}" style="background:${safeColor(c.hex)}" onclick="setRag('${id}',${jsAttr(c.key)})"></div>`).join('')
+    + `<div class="swatch ${!n.rag?'on':''}" title="Unrated" style="background:repeating-linear-gradient(45deg,var(--line),var(--line) 5px,var(--panel) 5px,var(--panel) 10px)" onclick="setRag('${id}',null)"></div>`
+    // Status and tags are the same kind of thing — a shared vocabulary applied to a person — so
+    // both are creatable from here. A status without a meaning cannot be read in the key, so the
+    // form asks for it at the moment of creation rather than flagging it as missing afterwards.
+    + `<div class="swatch addsw" title="Create a new status" onclick="showNewStatus('${id}')">+</div>`;
+  const newStatusForm = NEWSTATUS_FOR===id ? `
+    <div class="newstatus">
+      <div class="ns-row"><input id="ns-label" placeholder="Name it — e.g. Watch closely" autocomplete="off">
+        <input id="ns-hex" type="color" value="#ec4899"></div>
+      <input id="ns-meaning" placeholder="What does this colour mean? (required)" autocomplete="off">
+      <div class="ns-row" style="margin-top:6px">
+        <button class="btn-accent" onclick="createStatus('${id}')">Add &amp; apply</button>
+        <button onclick="hideNewStatus()">Cancel</button></div>
+    </div>` : '';
+  // No delete here. This chip is a per-person toggle; deleting the tag strips it from EVERYONE,
+  // and a chart-wide destructive action must not sit one pixel from a per-person one. Vocabulary
+  // is managed in More ▾ → Colours & tag definitions, where the context is the vocabulary itself.
+  const tags=tagList().map(t=>`<span class="tag ${(n.tags||[]).includes(t)?'on':''}" onclick="toggleTag('${id}',${jsAttr(t)})" title="${esc(tagTip(t))}"><span>${esc(t)}</span></span>`).join('')
+    + `<span class="tag addtag" title="Create a new tag" onclick="addTag()">+ New tag</span>`;
+  const sigBlock = '';   // retired with the chip
+  const _renderNote=(nt)=>{
+      const isAction = nt.status==='open'||nt.status==='resolved';
+      let foot='';
+      if(isAction){ const col = nt.status==='open'?'#f59e0b':'#22c55e';
+        foot=`<div style="margin-top:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="chip" style="background:transparent;border:1px solid ${col};color:${col}">${nt.status}</span>
+          ${nt.owner?`<span style="font-size:11px;color:var(--muted)">→ ${esc(nt.owner)}</span>`:''}
+          <button style="padding:3px 8px;font-size:11px" onclick="toggleNoteStatus('${id}','${nt.id}')">${nt.status==='open'?'Resolve':'Reopen'}</button></div>`;
+      } else if(nt.owner){ foot=`<div style="margin-top:6px;font-size:11px;color:var(--muted)">→ ${esc(nt.owner)}</div>`; }
+      return `<div class="note"><div class="h"><b>${esc(nt.author)}</b><span>${fmt(nt.at)}</span></div><div class="b">${esc(nt.body)}</div>${foot}</div>`;
+  };
+  const _real=(n.notes||[]).filter(x=>!x.sys), _sys=(n.notes||[]).filter(x=>x.sys);
+  const discussion = _real.slice().reverse().map(_renderNote).join('') || `<div style="color:var(--muted);font-size:12px">No notes yet — start the discussion.</div>`;
+  const history = _sys.length ? _sys.slice().reverse().map(nt=>`<div class="note sys">${esc(nt.body)} — <b>${esc(nt.author)}</b>, ${fmt(nt.at)}</div>`).join('') : `<div style="color:var(--muted);font-size:12px">No changes recorded yet.</div>`;
+  const moveOpts=nodeOptions(id).map(o=>`<option value="${o.id}">${esc(o.name)}${o.entity?' ('+o.entity+')':''}</option>`).join('');
+  // Companies are DERIVED from the chart, not a hardcoded list — add a person in a new entity
+  // and it becomes a choice for everyone, and a row in the key, with no code change.
+  const entitySel=[...entityList(), ...(n.entity&&!entityList().includes(n.entity)?[n.entity]:[])]
+    .map(e=>`<option ${n.entity===e?'selected':''}>${esc(e)}</option>`).join('')
+    + '<option value="__new">+ new company…</option>';
+  document.getElementById('dw-body').innerHTML = `
+    <h3>Status</h3><div class="colors">${swatches}</div>${newStatusForm}
+    <h3>Issue tags</h3><div class="tags">${tags}</div>
+    ${sigBlock}
+    <h3>Notes</h3>
+    <textarea id="note-in" rows="3" placeholder="Add a note as ${esc((user&&user.name)||'you')}…"></textarea>
+    <div class="edit-row">
+      <input id="note-owner" placeholder="Owner (optional)" style="flex:1;min-width:120px">
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap;color:var(--muted)"><input type="checkbox" id="note-action" style="width:auto"> action item</label>
+      <button class="btn-accent" onclick="addNote('${id}')">Add</button>
+    </div>
+    <div style="margin-top:14px">${discussion}</div>
+    <h3>Edit position</h3>
+    <input id="ed-name" value="${esc(n.name)}" placeholder="Name">
+    <input id="ed-title" value="${esc(n.title||'')}" placeholder="Role / title" style="margin-top:6px">
+    <div class="edit-row">
+      <select id="ed-entity" style="flex:1" onchange="onEntityPick(this,'${id}')">${entitySel}</select>
+      <input id="ed-cost" type="number" value="${n.cost!=null?n.cost:''}" placeholder="Cost/mo (₹)" style="flex:1">
+    </div>
+    <div class="edit-row">
+      <button class="btn-accent" onclick="saveEdit('${id}')">Save</button>
+      <button onclick="addReport('${id}')" title="Add a position reporting to this one">+ Report</button>
+      <button onclick="addSibling('${id}')" title="Add a position alongside this one">+ Sibling</button>
+      <button class="btn-danger" onclick="deleteNode('${id}')">Delete</button>
+    </div>
+    <div class="edit-row">
+      <select id="ed-move" style="flex:1;min-width:150px"><option value="">Move under…</option>${moveOpts}</select>
+      <button onclick="moveNode('${id}')">Move</button>
+    </div>
+    <details class="history"><summary>History &nbsp;·&nbsp; ${_sys.length} change${_sys.length===1?'':'s'} (colour / rating)</summary><div class="hist-list">${history}</div></details>`;
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.querySelectorAll('.node.sel').forEach(e=>e.classList.remove('sel')); selectedId=null; }
+
+function setRag(id,key){
+  const n=findNode(id).node; if(n.rag===key) return;
+  pushOrgUndo(id, {rag: n.rag||null});
+  if(apiMode()) return apiDo(()=>api('/nodes/'+id,{method:'PATCH',body:JSON.stringify({rag:key})}));
+  n.rag=key;
+  (n.notes=n.notes||[]).push({author:user.name,at:nowISO(),body:`Status → ${key?ragLabel(key):'Unrated'}`,sys:true});
+  render(); openNode(id);
+}
+async function toggleTag(id,t){
+  const n=findNode(id).node; const cur=n.tags||[];
+  // Tagging is a fast judgement call and must stay one click. The guardrail lives at LABEL
+  // CREATION — a tag cannot exist without a definition — not at the moment it is applied.
+  const next = cur.includes(t) ? cur.filter(x=>x!==t) : [...cur,t];
+  pushOrgUndo(id, {tags: [...cur]});
+  if(apiMode()) return apiDo(()=>api('/nodes/'+id,{method:'PATCH',body:JSON.stringify({tags:next})}));
+  n.tags=next; render(); openNode(id);
+}
+/* Every company currently on the chart, plus any seeded defaults, in a stable order. */
+function entityList(){
+  const seen=new Set();
+  if(state.org) walk(state.org, n=>{ if(n.entity) seen.add(n.entity); });
+  (state.entities||[]).forEach(e=>seen.add(e));
+  return [...seen].sort();
+}
+/* Chosen "+ new company…" in the entity dropdown. */
+function onEntityPick(sel, id){
+  if(sel.value!=='__new') return;
+  const raw=prompt('New company\n(short code as it should appear on every box, e.g. HO)');
+  const v=(raw||'').trim();
+  if(!v){ const n=findNode(id); sel.value=(n&&n.node.entity)||''; return; }
+  (state.entities=state.entities||[]).push(v);
+  sel.insertAdjacentHTML('afterbegin', `<option selected>${esc(v)}</option>`);
+  sel.value=v;
+}
+/* ---- status vocabulary, creatable from the box that needs it ---- */
+let NEWSTATUS_FOR=null;
+function showNewStatus(id){ NEWSTATUS_FOR=id; openNode(id);
+  setTimeout(()=>{ const e=document.getElementById('ns-label'); if(e) e.focus(); },30); }
+function hideNewStatus(){ const id=NEWSTATUS_FOR; NEWSTATUS_FOR=null; if(id) openNode(id); }
+async function createStatus(id){
+  const label=document.getElementById('ns-label').value.trim();
+  const hex=document.getElementById('ns-hex').value;
+  const meaning=document.getElementById('ns-meaning').value.trim();
+  const flag=el=>{ el.focus(); el.style.outline='2px solid #ef4444'; setTimeout(()=>{el.style.outline='';},1500); };
+  if(!label) return flag(document.getElementById('ns-label'));
+  if(!meaning) return flag(document.getElementById('ns-meaning'));   // the one rule
+  const key=slugKey(label) || ('c'+Date.now());
+  if(state.colors.some(c=>c.key===key)){ alert(`"${label}" already exists.`); return; }
+  if(apiMode()){
+    try{ await api('/colors',{method:'POST',body:JSON.stringify({key,label,hex,meaning,action:''})}); }
+    catch(e){ alert('Could not add status: '+e.message); return; }
+  } else { state.colors.push({key,label,hex,meaning,action:''}); save(); }
+  NEWSTATUS_FOR=null;
+  setRag(id,key);            // created AND applied — that is why you were in this dialog
+}
+/* ---- editable tag vocabulary (shared across all positions, like the colours) ---- */
+async function addTag(){
+  const raw=prompt('New issue tag\n(short + reusable, e.g. "no-backup", "wrong-fit")'); if(raw===null) return;
+  const t=slugKey(raw); if(!t){ alert('Tag names use letters, numbers and dashes only.'); return; }
+  if(tagList().includes(t)){ alert(`"${t}" already exists.`); return; }
+  // A tag with no definition cannot be explained in the key and cannot be defended to the
+  // client — so it is not allowed to exist. Ask until we get one, or the user cancels.
+  let def='';
+  for(;;){
+    def = prompt(`Define "${t}" — what does it imply?\n\nEvery tag must be defensible to the client, so this wording is what we are held to.\n\nThis is required: a tag with no definition cannot be shown in the key.`, def);
+    if(def===null) return;                       // cancelled: no tag is created
+    if(def.trim()) break;
+    alert('A definition is required — otherwise nobody can tell what this tag means.');
+  }
+  const test=prompt(`What is the TEST for "${t}"? (how do we decide it applies)`,'')||'';
+  if(apiMode()){
+    try{ await api('/tags',{method:'POST',body:JSON.stringify({name:t, definition:def.trim(), test:test.trim()||null})}); }
+    catch(e){ alert('Could not add tag: '+e.message); return; }
+    absorbTags(await api('/tags'));
+  } else { tagList().push(t); (state.tagdefs=state.tagdefs||[]).push({name:t,definition:def.trim(),test:test.trim()}); save(); }
+  refreshFilter(); render(); if(selectedId) openNode(selectedId);
+}
+/* Add or correct a definition on an existing tag. POST /tags upserts, so this is the edit path. */
+async function defineTag(t){
+  const d=(tagDefs().find(x=>x.name===t)||{});
+  const def=prompt(`Define "${t}" — what does it imply?\n\nThis wording is what we are held to in front of the client.`, d.definition||'');
+  if(def===null || !def.trim()) return;
+  const test=prompt(`What is the TEST for "${t}"? (how do we decide it applies)`, d.test||'')||'';
+  if(apiMode()){
+    try{ await api('/tags',{method:'POST',body:JSON.stringify({name:t, definition:def.trim(), test:test.trim()||null})}); }
+    catch(e){ alert('Could not save: '+e.message); return; }
+    absorbTags(await api('/tags'));
+  } else {
+    const e=(state.tagdefs=state.tagdefs||[]).find(x=>x.name===t);
+    if(e){ e.definition=def.trim(); e.test=test.trim(); } else state.tagdefs.push({name:t,definition:def.trim(),test:test.trim()});
+    save();
+  }
+  render(); if(selectedId) openNode(selectedId);
+}
+async function delTag(t){
+  const used=[]; walk(state.org,n=>{ if((n.tags||[]).includes(t)) used.push(n.name); });
+  const warn = used.length ? `\n\nIt is currently on ${used.length} position${used.length===1?'':'s'} (${used.slice(0,3).join(', ')}${used.length>3?'…':''}) and will be removed from them.` : '';
+  if(!confirm(`Delete the tag "${t}"?${warn}`)) return;
+  if(apiMode()){ try{ await api('/tags/'+encodeURIComponent(t),{method:'DELETE'}); }catch(e){ alert('Could not delete tag: '+e.message); return; } await refreshTree(true); }
+  else { state.tags=tagList().filter(x=>x!==t); walk(state.org,n=>{ if(n.tags) n.tags=n.tags.filter(x=>x!==t); }); save(); }
+  refreshFilter(); render(); if(selectedId) openNode(selectedId);
+}
+/* Write a note without going through the drawer's form — used by the tag gate, which must
+   record the reason as part of the same action that applies the tag. Awaited, so the tag
+   PATCH that follows cannot land before the note exists. */
+async function addNoteFor(id, body){
+  if(!body) return;
+  if(apiMode()){
+    try{ await api('/nodes/'+id+'/notes',{method:'POST',body:JSON.stringify({body,owner:null,is_action:false})}); }
+    catch(e){ alert('Could not save the reason: '+e.message); throw e; }
+    return;
+  }
+  const n=findNode(id).node;
+  (n.notes=n.notes||[]).push({id:'nt'+Date.now(),author:user.name,at:nowISO(),body});
+}
+function addNote(id){
+  const body=document.getElementById('note-in').value.trim(); if(!body) return;
+  const owner=document.getElementById('note-owner').value.trim();
+  const isAction=document.getElementById('note-action').checked;
+  if(apiMode()) return apiDo(()=>api('/nodes/'+id+'/notes',{method:'POST',body:JSON.stringify({body,owner:owner||null,is_action:isAction})}));
+  const n=findNode(id).node;
+  const note={id:'nt'+Date.now(),author:user.name,at:nowISO(),body};
+  if(isAction) note.status='open';
+  if(owner) note.owner=owner;
+  (n.notes=n.notes||[]).push(note);
+  render(); openNode(id);
+}
+function toggleNoteStatus(nodeId,noteId){
+  const n=findNode(nodeId).node; const nt=(n.notes||[]).find(x=>x.id===noteId); if(!nt) return;
+  const ns = nt.status==='open' ? 'resolved' : 'open';
+  if(apiMode()) return apiDo(()=>api('/notes/'+noteId,{method:'PATCH',body:JSON.stringify({status:ns})}));
+  nt.status = ns;
+  render(); openNode(nodeId);
+}
+
+/* ---------------- STRUCTURE EDITING ---------------- */
+function saveEdit(id){
+  const n=findNode(id).node;
+  const name=document.getElementById('ed-name').value.trim();
+  const title=document.getElementById('ed-title').value.trim();
+  const entity=document.getElementById('ed-entity').value === '__new' ? '' : document.getElementById('ed-entity').value;
+  const cv=document.getElementById('ed-cost').value; const cost = cv==='' ? null : Number(cv);
+  if(n.name===(name||n.name) && (n.title||'')===title && (n.entity||'')===entity && (n.cost==null?null:n.cost)===cost) return;
+  pushOrgUndo(id, {name:n.name, title:n.title||'', entity:n.entity||'', cost:(n.cost==null?null:n.cost)});
+  if(apiMode()){ const body={title,entity,cost}; if(name) body.name=name;
+    return apiDo(()=>api('/nodes/'+id,{method:'PATCH',body:JSON.stringify(body)})); }
+  n.name=name||n.name; n.title=title; n.entity=entity; n.cost=cost;
+  render(); openNode(id);
+}
+/* One dialog for both "add a report" and "add a peer". Everything a box can carry is on it —
+   company (with "+ new" inline), status and tags — so a position is complete the moment it
+   exists instead of being created blank and filled in later, which never happens. */
+let NP=null;
+function addReport(id){ openNewPos(id, 'report'); }
+function addSibling(id){
+  const f=findNode(id);
+  if(!f || !f.parent){ alert('The top of the chart has no siblings.'); return; }
+  openNewPos(id, 'peer');
+}
+/* Add a person without having to find their manager first — the dialog asks who they report
+   to. `+ Report` / `+ Sibling` skip that question because the answer is already known. */
+function addPersonAnywhere(){
+  const start = selectedId && findNode(selectedId) ? selectedId : (state.org && state.org.id);
+  if(!start){ alert('Nothing to attach a person to yet.'); return; }
+  openNewPos(start, 'report', true);
+}
+function openNewPos(anchorId, mode, askParent){
+  const f=findNode(anchorId); if(!f) return;
+  const anchor=f.node;
+  const parent = mode==='peer' ? f.parent : anchor;
+  NP={parentId:parent.id, rag:null, tags:[]};
+  // the "reports to" picker only appears when we do not already know the answer
+  const wrap=document.getElementById('np-parent-wrap');
+  wrap.hidden = !askParent;
+  if(askParent){
+    const opts=[]; walk(state.org, n=>opts.push(n));
+    document.getElementById('np-parent').innerHTML = opts.map(n=>
+      `<option value="${n.id}" ${n.id===parent.id?'selected':''}>${esc(n.name)}${n.title?' — '+esc(n.title):''}</option>`).join('');
+  }
+  document.getElementById('np-title').textContent = askParent ? 'Add a person'
+    : (mode==='peer' ? `New position alongside ${anchor.name}` : `New position reporting to ${anchor.name}`);
+  document.getElementById('np-name').value='';
+  document.getElementById('np-title-in').value='';
+  document.getElementById('np-hint').textContent = askParent
+    ? 'Company defaults to their manager\u2019s — change it here if it differs.'
+    : `Will report to ${parent.name}. Company defaults to theirs — change it here if it differs.`;
+  // company: derived list + inherit the parent's + create a new one inline
+  const ents=entityList();
+  const inherit = anchor.entity || parent.entity || '';
+  if(inherit && !ents.includes(inherit)) ents.push(inherit);
+  document.getElementById('np-entity').innerHTML =
+    ents.map(e=>`<option ${e===inherit?'selected':''}>${esc(e)}</option>`).join('')
+    + '<option value="__new">+ new company…</option>';
+  // status swatches straight from the palette
+  document.getElementById('np-rag').innerHTML = state.colors.map(c=>
+    `<div class="sw" data-rag="${esc(c.key)}" title="${esc(c.label)} — ${esc(c.meaning||'')}"
+      style="background:${safeColor(c.hex)}"></div>`).join('');
+  // tags straight from the vocabulary
+  document.getElementById('np-tags').innerHTML = tagList().map(t=>{
+    const d=(tagDefs().find(x=>x.name===t)||{});
+    return `<span class="chip" data-tag="${esc(t)}" title="${esc(d.definition||'no definition set')}">${esc(t)}</span>`;
+  }).join('') || '<span class="hint" style="margin:0">No tags defined yet — add them from More ▾ → Colours &amp; tag definitions.</span>';
+  document.getElementById('newpos').classList.add('open');
+  setTimeout(()=>document.getElementById('np-name').focus(), 40);
+}
+function closeNewPos(){ document.getElementById('newpos').classList.remove('open'); NP=null; }
+/* delegated so nothing carries user text in an inline handler */
+document.addEventListener('click', e=>{
+  if(!e.target.closest || !NP) return;
+  const sw=e.target.closest('#np-rag .sw');
+  if(sw){ const k=sw.dataset.rag; NP.rag = NP.rag===k ? null : k;
+    document.querySelectorAll('#np-rag .sw').forEach(x=>x.classList.toggle('on', x.dataset.rag===NP.rag)); return; }
+  const ch=e.target.closest('#np-tags .chip');
+  if(ch){ const t=ch.dataset.tag;
+    NP.tags = NP.tags.includes(t) ? NP.tags.filter(x=>x!==t) : [...NP.tags, t];
+    ch.classList.toggle('on', NP.tags.includes(t)); }
+});
+document.addEventListener('change', e=>{
+  if(e.target && e.target.id==='np-entity' && e.target.value==='__new'){
+    const raw=prompt('New company\n(short code as it should appear on every box, e.g. HO)');
+    const v=(raw||'').trim();
+    const sel=e.target;
+    if(!v){ sel.selectedIndex=0; return; }
+    (state.entities=state.entities||[]).push(v);
+    sel.insertAdjacentHTML('afterbegin', `<option selected>${esc(v)}</option>`);
+    sel.value=v;
+  }
+});
+async function createPosition(){
+  if(!NP) return;
+  const name=document.getElementById('np-name').value.trim();
+  if(!name){ const el=document.getElementById('np-name'); el.focus();
+    el.style.outline='2px solid #ef4444'; setTimeout(()=>{el.style.outline='';},1400); return; }
+  const title=document.getElementById('np-title-in').value.trim();
+  const entSel=document.getElementById('np-entity');
+  const entity = entSel.value==='__new' ? '' : entSel.value;
+  const pw=document.getElementById('np-parent-wrap');
+  const parentId = (!pw.hidden && document.getElementById('np-parent').value) || NP.parentId;
+  const body={parent_id:parentId, type:'person', name, title, entity,
+              rag:NP.rag||null, tags:NP.tags};
+  closeNewPos();
+  if(apiMode()) return apiDo(()=>api('/nodes',{method:'POST',body:JSON.stringify(body)}));
+  const parent=findNode(body.parent_id).node;
+  const kid={id:'n'+Date.now()+Math.floor(performance.now()),type:'person',name,title,
+             entity,rag:body.rag,tags:[...body.tags],notes:[],cost:null,_collapsed:false,reports:[]};
+  (parent.reports=parent.reports||[]).push(kid); parent._collapsed=false;
+  render(); openNode(kid.id);
+}
+async function deleteNode(id){
+  const f=findNode(id);
+  if(!f.parent){ alert('Cannot delete the top of the chart.'); return; }
+  const kids=(f.node.reports||[]).length;
+  if(!confirm(`Delete “${f.node.name}”${kids?` and its ${kids} report(s)`:''}?\n\nYou can undo this with ⌘Z.`)) return;
+  if(apiMode()){
+    closeDrawer();
+    try{
+      const r=await api('/nodes/'+id,{method:'DELETE'});   // soft delete → returns a batch id
+      UNDO.push({restore:r.batch, id}); if(UNDO.length>60) UNDO.shift(); REDO.length=0;
+      await refreshTree(true);
+    }catch(e){ if(e.message!=='unauthorized') alert('Server error: '+e.message); }
+    return;
+  }
+  UNDO.push({orgTree:JSON.stringify(state.org)}); if(UNDO.length>60) UNDO.shift(); REDO.length=0;
+  f.parent.reports=f.parent.reports.filter(r=>r.id!==id);
+  closeDrawer(); render();
+}
+function nodeOptions(excludeId){
+  const excl=new Set(); const f=findNode(excludeId); if(f) walk(f.node,x=>excl.add(x.id));
+  const opts=[]; walk(state.org,x=>{ if(!excl.has(x.id)) opts.push(x); });
+  return opts;
+}
+function moveNode(id){
+  const target=document.getElementById('ed-move').value; if(!target) return;
+  reparent(id, target);
+}
+
+/* ---------------- SEARCH ---------------- */
+function onSearch(q){
+  q=q.trim().toLowerCase();
+  document.querySelectorAll('.node.match').forEach(e=>e.classList.remove('match'));
+  if(!q) return;
+  let first=null;
+  walk(state.org,n=>{
+    if((n.name+' '+(n.title||'')).toLowerCase().includes(q)){
+      const el=document.querySelector(`.node[data-id="${n.id}"]`);
+      if(el){ el.classList.add('match'); if(!first) first=el; }
+    }
+  });
+  if(first) first.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+}
+
+/* ---------------- LEGEND ---------------- */
+function openLegend(){
+  const colours = state.colors.map(c=>`
+    <div class="legrow"><div class="sw" style="background:${safeColor(c.hex)}"></div>
+      <div class="txt"><b>${esc(c.label)}</b><div>${esc(c.meaning||'')}${c.action?' → '+esc(c.action):''}</div></div>
+      <button class="del" title="Delete this colour" onclick="delColor(${jsAttr(c.key)})">×</button></div>`).join('');
+  // Frozen tag wording — this section is what gets walked through with the client.
+  const counts={}; walk(state.org,n=>{ (n.tags||[]).forEach(t=>counts[t]=(counts[t]||0)+1); });
+  const tags = tagDefs().map(d=>`
+    <div class="tagdef">
+      <div class="h"><b>${esc(d.name)}</b><span>${counts[d.name]||0} people</span>
+        <button class="tagedit" data-deftag="${esc(d.name)}" title="Edit this wording">edit</button>
+        <button class="tagdel" data-deltag="${esc(d.name)}" title="Remove this tag from the vocabulary and from everyone who has it">delete</button>
+      </div>
+      ${d.definition?`<div class="b">${esc(d.definition)}</div>`:'<div class="b" style="color:#ef4444">No definition set — add one before using this tag.</div>'}
+      ${d.test?`<div class="t"><b>The test:</b> ${esc(d.test)}</div>`:''}
+      ${d.action?`<div class="t"><b>What we'd do:</b> ${esc(d.action)}</div>`:''}
+    </div>`).join('');
+  document.getElementById('leg-list').innerHTML =
+    `<h3 style="margin-top:0">Statuses</h3>${colours}
+     <h3>Issue tags — agreed definitions</h3>
+     <div class="tagnote">A <b>status</b> says there is an issue; a <b>tag</b> says which issue.
+       Overloaded and underutilised are both red but imply opposite fixes, so the tag is what makes it actionable.
+       Every tag must carry a definition — that wording is what we are held to in front of the client.</div>
+     ${tags}`;
+  document.getElementById('legend').classList.add('open');
+}
+function closeLegend(){ document.getElementById('legend').classList.remove('open'); }
+
+/* ---------------- ON-CANVAS KEY ----------------
+   The modal legend explains colours and tags. A box can carry nine different marks, and
+   a line three — so someone reading the chart cold had no way to decode most of it.
+   This panel lists every mark the chart can draw, with a live count, next to the chart. */
+function toggleMapLegend(){
+  const el=document.getElementById('maplegend'); const on=el.classList.toggle('on');
+  try{ localStorage.setItem('cb-key-on', on?'1':'0'); }catch(e){}
+  const b=document.getElementById('key-btn'); if(b) b.classList.toggle('active', on);
+  if(on) renderMapLegend();
+}
+function toggleLegendMin(){
+  const el=document.getElementById('maplegend'); const m=el.classList.toggle('min');
+  document.getElementById('lg-caret').textContent = m?'▸':'▾';
+  try{ localStorage.setItem('cb-key-min', m?'1':'0'); }catch(e){}
+}
+function renderMapLegend(){
+  const el=document.getElementById('maplegend'); if(!el.classList.contains('on')) return;
+  const people=[], all=[];
+  if(state.org) walk(state.org, n=>{ all.push(n); if(n.type==='person') people.push(n); });
+  const cur = FILTER ? FILTER.kind+':'+FILTER.key : '';
+  /* Every row is derived from live data — nothing here is hardcoded. Add a colour or a tag
+     and it appears with its own count; remove one and its row goes. Rows that can be filtered
+     on are clickable, which is what makes this a navigator rather than a picture of a key. */
+  const row = (swatch, name, meaning, count, filterKey) => {
+    const on = filterKey && filterKey===cur;
+    // filterKey carries a TAG NAME, which any logged-in user can create. Interpolating it into
+    // an inline onclick="" puts user data inside a JS string inside an HTML attribute — the exact
+    // shape of the stored-XSS bug already fixed once in this file. Emit it as data instead and let
+    // one delegated listener read it back, so it can never be parsed as code.
+    return `<div class="lgi${filterKey?' can':''}${on?' on':''}" title="${esc(meaning)}${
+      filterKey?' — click to show only these':''}"${
+      filterKey?` data-fk="${esc(filterKey)}"`:''
+      }><div class="k">${swatch}</div><div class="v"><b>${name}</b><i>${meaning}</i></div>${
+      count===undefined?'':`<div class="cnt2">${count}</div>`}</div>`;
+  };
+
+  /* 0. Completeness. The key can only be right if the data behind it is, so anything that
+        would make a row unreadable is listed here first, with a one-click fix. When there is
+        nothing to fix it says so — an empty section you can trust beats a silent one. */
+  const defs0={}; tagDefs().forEach(d=>defs0[d.name]=d);
+  const used0={}; people.forEach(n=>(n.tags||[]).forEach(t=>used0[t]=(used0[t]||0)+1));
+  const gaps=[];
+  Object.keys(used0).forEach(t=>{
+    if(!(defs0[t]&&defs0[t].definition))
+      gaps.push({label:`Tag "${t}" has no definition`, why:'it cannot be explained in the key or defended to the client',
+                 n:used0[t], fix:'tagdef:'+t, cta:'define it'});
+  });
+  state.colors.forEach(c=>{
+    const n=people.filter(x=>x.rag===c.key).length;
+    if(n && !c.meaning) gaps.push({label:`Status "${c.label}" has no meaning`, why:'nobody can tell what this colour is saying',
+                                   n, fix:'colours', cta:'set it'});
+  });
+  const noEntity=people.filter(n=>!n.entity).length;
+  if(noEntity) gaps.push({label:'People with no company', why:'they are missing from the entity counts', n:noEntity});
+  // NOT a gap: a vocabulary is allowed to hold a term nobody has needed yet. It does not make
+  // any row in the key wrong, and listing it here would train people to ignore this section.
+
+  let h='';
+  if(gaps.length){
+    h += '<h5 class="warn">Needs recording — the key is only as right as this</h5>';
+    gaps.forEach(g=>{
+      h += `<div class="lgi gap${g.fix?' can':''}"${g.fix?` data-fix="${esc(g.fix)}"`:''} title="${esc(g.why)}${g.fix?' — click to '+g.cta:''}">
+        <div class="k"><span class="chip warnchip">!</span></div>
+        <div class="v"><b>${esc(g.label)}</b><i>${esc(g.why)}${g.fix?` — click to ${esc(g.cta)}`:''}</i></div>
+        <div class="cnt2">${g.n}</div></div>`;
+    });
+  }   // nothing to report = show nothing; a clean key is the normal state, not an achievement
+
+  // 1. status colours — straight from the editable palette
+  h += '<h5>Status — how this person is rated</h5>';
+  const known=new Set();
+  state.colors.forEach(c=>{
+    known.add(c.key);
+    const hex=safeColor(c.hex), n=people.filter(x=>x.rag===c.key).length;
+    if(!n && !c.meaning) return;                       // never seen and never explained: skip
+    h += row(`<div class="swz" style="border-left-color:${hex};background:${hexA(hex,0.12)}"></div>`,
+             esc(c.label), esc(c.meaning||'no meaning set — add one in More ▾ → Colours & tag definitions'),
+             n, 'c:'+c.key);
+  });
+  // a colour deleted from the palette must not make the people wearing it vanish from the key
+  const orphan=people.filter(x=>x.rag && !known.has(x.rag)).length;
+  if(orphan) h += row('<div class="swz" style="border-left-color:#ef4444;background:transparent"></div>',
+    'Status no longer in the palette','the colour was deleted — re-rate these people or re-add it', orphan);
+  const unrated=people.filter(x=>!x.rag).length;
+  if(unrated) h += row('<div class="swz" style="border-left-color:var(--line);background:var(--panel2)"></div>',
+    'Unrated','not yet given a status', unrated);
+
+  // 2. every tag actually in use, each with its own count and its agreed definition
+  const used={}; people.forEach(n=>(n.tags||[]).forEach(t=>used[t]=(used[t]||0)+1));
+  const defs={}; tagDefs().forEach(d=>defs[d.name]=d);
+  const tags=Object.keys(used).sort((a,b)=>used[b]-used[a]);
+  if(tags.length){
+    h += '<h5>Issue tags — which problem it is</h5>';
+    tags.forEach(t=>{
+      const d=defs[t];
+      h += row(`<span class="chip">${esc(t)}</span>`, esc(t),
+               d&&d.definition ? esc(d.definition)
+                 : '⚠ no agreed definition yet — set one before using this tag',
+               used[t], 't:'+t);
+    });
+  }
+
+  // 3. the rest of what a box can carry
+  h += '<h5>Other marks on a box</h5>';
+  h += row('<span class="chip" style="background:#7f1d1d;color:#fecaca">⚡2</span>','Open action items',
+           'still open on this person — tick “action item” when adding a note',
+           all.reduce((a,n)=>a+openActions(n),0));
+  h += row('<div class="badge" style="position:static">3</div>','Notes',
+           'how many notes are on this person — click the box to read them',
+           people.filter(n=>(n.notes||[]).filter(x=>!x.sys).length).length);
+  const ents={}; people.forEach(n=>{ if(n.entity) ents[n.entity]=(ents[n.entity]||0)+1; });
+  const entName={HO:'Head Office — Mumbai', GOA:'Goa', BLR:'Bangalore', UNI:'Unitary', Group:'Group'};
+  Object.keys(ents).sort((a,b)=>ents[b]-ents[a]).forEach(e=>
+    h += row(`<span class="chip">${esc(e)}</span>`, esc(entName[e]||e), 'which company pays this person', ents[e]));
+
+  // 4. lines
+  h += '<h5>Lines between boxes</h5>';
+  const svg = inner => `<svg width="46" height="15" style="overflow:visible">${inner}</svg>`;
+  h += row(svg('<line x1="1" y1="8" x2="40" y2="8" stroke="var(--muted)" stroke-width="1.6"/><path d="M40,8 L34,5 L34,11 Z" fill="var(--muted)"/>'),
+           'Reports to','the formal reporting line', EDGES?EDGES.length:undefined);
+  const commN=(CANVAS.links||[]).filter(l=>l.kind==='comm').length;
+  if(commN) h += row(svg('<line x1="1" y1="8" x2="44" y2="8" stroke="#9aa3ae" stroke-width="1.2" stroke-dasharray="3 4" opacity=".85"/>'),
+           'Work given directly','handed work outside the reporting line', commN);
+
+  // 5. the critique layer, only if this board has one
+  const nL=(CANVAS.boxes||[]).filter(b=>b.shape==='lasso'||b.shape==='ring').length;
+  const nC=(CANVAS.boxes||[]).filter(b=>b.shape==='callout').length;
+  if(nL||nC){
+    h += '<h5>Critique marks</h5>';
+    if(nL) h += row(svg('<rect x="2" y="1" width="40" height="13" rx="4" fill="none" stroke="#ef4444" stroke-width="2"/>'),
+             'Ring round a group','the people a finding is about — click the outline to move or edit it', nL);
+    if(nC) h += row(`<div class="swz" style="border:1px solid #ef4444;border-left-color:#ef4444;background:${hexA('#ef4444',0.16)}"></div>`,
+             'Finding','the point being made, tail pointing at who it is about', nC);
+  }
+  document.getElementById('lg-key').innerHTML = h;
+  document.getElementById('lg-hint').textContent =
+    (FILTER ? 'filtered · ' : '') + people.length + ' people';
+}
+/* One delegated listener for the whole key — no inline handlers, so nothing in a row is ever
+   evaluated as code. Bound once, survives every re-render of the panel's innerHTML. */
+document.addEventListener('click', e=>{
+  if(!e.target.closest) return;
+  const ed=e.target.closest('#legend [data-deftag]'); if(ed){ defineTag(ed.dataset.deftag); return; }
+  const dl=e.target.closest('#legend [data-deltag]'); if(dl){ delTag(dl.dataset.deltag); return; }
+  const row = e.target.closest('#lg-key .lgi[data-fk]');
+  if(row){ legendFilter(row.dataset.fk); return; }
+  const fix = e.target.closest('#lg-key .lgi[data-fix]');
+  if(fix){
+    const v=fix.dataset.fix;
+    if(v==='colours') openLegend();
+    else if(v.startsWith('tagdef:')) defineTag(v.slice(7));
+  }
+});
+/* clicking a key row filters the chart to it; clicking the active one clears */
+function legendFilter(v){
+  const sel=document.getElementById('filter');
+  sel.value = (FILTER && FILTER.kind+':'+FILTER.key===v) ? '' : v;
+  applyFilter();
+  renderMapLegend();
+}
+
+async function delColor(key){
+  const c=state.colors.find(x=>x.key===key);
+  if(!confirm('Delete the "'+(c?c.label:key)+'" colour? Any position rated with it becomes unrated.')) return;
+  if(apiMode()){
+    try{ await api('/colors/'+encodeURIComponent(key),{method:'DELETE'}); await refreshTree(true); }
+    catch(e){ alert('Server error: '+e.message); return; }
+  } else {
+    state.colors=state.colors.filter(x=>x.key!==key);
+    walk(state.org,n=>{ if(n.rag===key) n.rag=null; });
+    save(); refreshFilter();
+  }
+  refreshFilter(); openLegend(); if(selectedId) openNode(selectedId);
+}
+async function addColor(){
+  const label=document.getElementById('nc-label').value.trim(); const hex=document.getElementById('nc-color').value;
+  if(!label){ const el=document.getElementById('nc-label'); el.focus(); el.style.outline='2px solid #ef4444'; setTimeout(()=>{el.style.outline='';},1200); return; }
+  const key=label.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  const meaning=document.getElementById('nc-meaning').value.trim(); const action=document.getElementById('nc-action').value.trim();
+  // same rule as tags: a status with no meaning is unreadable in the key
+  if(!meaning){ const el=document.getElementById('nc-meaning'); el.focus();
+    el.style.outline='2px solid #ef4444'; setTimeout(()=>{el.style.outline='';},1600);
+    el.placeholder='Required — what does this colour mean?'; return; }
+  if(apiMode()){
+    try{ await api('/colors',{method:'POST',body:JSON.stringify({key,label,hex,meaning,action})}); await refreshTree(true); }
+    catch(e){ alert('Server error: '+e.message); return; }
+  } else {
+    state.colors.push({key,label,hex,meaning,action}); save(); refreshFilter();
+  }
+  document.getElementById('nc-label').value=''; document.getElementById('nc-meaning').value=''; document.getElementById('nc-action').value='';
+  openLegend(); if(selectedId) openNode(selectedId);
+}
+
+/* ---------------- EXPORT / IMPORT / RESET ---------------- */
+function exportJSON(){
+  const clean=structuredClone(state);
+  walk(clean.org,n=>{ delete n._collapsed; });
+  const blob=new Blob([JSON.stringify({colors:clean.colors,root:clean.org},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='cb-org-'+nowISO().slice(0,10)+'.json'; a.click();
+}
+function importJSON(ev){
+  const file=ev.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=async ()=>{ try{ const d=JSON.parse(r.result);
+      if(apiMode()){
+        await api('/import',{method:'POST',body:JSON.stringify({colors:d.colors,root:d.root||d.org||d})});
+        await refreshTree(false); fitView(); alert('Imported to server.');
+      } else {
+        state.org=d.root||d.org||d; if(d.colors) state.colors=d.colors.map(c=>({...c,key:String(c.key||'').replace(/[^a-z0-9-]/g,''),hex:safeColor(c.hex)}));
+        refreshFilter(); render(); fitView(); alert('Imported.');
+      }
+    }catch(e){ alert('Import failed: '+e.message); } };
+  r.readAsText(file); ev.target.value='';
+}
+function resetSeed(){
+  // ⛔ In the DEPLOYED build the seed is stripped (see scripts/build.sh), so SEED.root is an
+  // empty placeholder. Re-seeding the server from it would replace the whole live org with a
+  // single blank node — the most destructive thing in the app, behind one OK. It is refused
+  // outright rather than confirmed, because there is no version of "yes" that is correct here.
+  const seedIsEmpty = !SEED.root || !(SEED.root.reports||[]).length;
+  if(apiMode()){
+    if(seedIsEmpty){
+      alert('Nothing to re-seed from.\n\nThis build ships without the built-in structure, so this would '
+          + 'REPLACE the live org with an empty chart. Use More ▾ → Import JSON to load a real structure, '
+          + 'or restore from a backup (see BACKUP-RESTORE.md).');
+      return;
+    }
+    // typing the board name is the only thing that separates this from every other menu click
+    const want=(BOARD&&BOARD.name)||'the server';
+    const typed=prompt('This REPLACES every position, rating, tag and note on the server.\n\n'
+      + 'There is no undo. To confirm, type the board name exactly:\n\n  '+want, '');
+    if(typed===null) return;
+    if(typed.trim()!==want){ alert('Name did not match — nothing was changed.'); return; }
+    api('/import',{method:'POST',body:JSON.stringify({colors:SEED.colors,root:SEED.root})})
+      .then(()=>refreshTree(false)).then(fitView).catch(e=>alert('Server error: '+e.message));
+    return;
+  }
+  if(!confirm('Reset to the imported org structure? This wipes local colours/notes/edits in this browser.')) return;
+  localStorage.removeItem(STORAGE_KEY); location.reload();
+}
+async function exportPNG(){
+  if(typeof html2canvas==='undefined'){ alert('PNG export needs internet access (the html2canvas library failed to load).'); return; }
+  const snap={}; walk(state.org,n=>{ snap[n.id]=n._collapsed; }); expandAll();
+  const vp=document.getElementById('viewport'); const savedT=vp.style.transform; vp.style.transform='none';
+  await new Promise(r=>setTimeout(r,80));
+  try{
+    const bg=getComputedStyle(document.body).backgroundColor;
+    const cv=await html2canvas(vp,{backgroundColor:bg,scale:2,logging:false});
+    const a=document.createElement('a'); a.href=cv.toDataURL('image/png'); a.download='cb-org-'+nowISO().slice(0,10)+'.png'; a.click();
+  }catch(err){ alert('PNG export failed: '+err.message); }
+  vp.style.transform=savedT;
+  walk(state.org,n=>{ if(n.id in snap) n._collapsed=snap[n.id]; }); render();
+}
+
+/* ---------------- PAN / ZOOM ---------------- */
+let tx=0,ty=0,scale=1, dragging=false, sx,sy;
+const canvas=document.getElementById('canvas'), viewport=document.getElementById('viewport');
+function applyT(){ viewport.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`; }
+function zoomBy(d){ scale=Math.min(2,Math.max(0.2,scale+d)); applyT(); }
+function fitView(){
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9,any=false;
+  VIS.forEach(n=>{ const p=POSITIONS[n.id]; if(p){ any=true; minX=Math.min(minX,p.x); minY=Math.min(minY,p.y); maxX=Math.max(maxX,p.x+NW); maxY=Math.max(maxY,p.y+NH); } });
+  // free boxes count too — on a blank (process-mapping) board they are all there is
+  CANVAS.boxes.forEach(bx=>{ any=true; minX=Math.min(minX,bx.x); minY=Math.min(minY,bx.y); maxX=Math.max(maxX,bx.x+(bx.w||170)); maxY=Math.max(maxY,bx.y+(bx.h||60)); });
+  if(!any){ scale=1; tx=40; ty=40; applyT(); return; }
+  const w=(maxX-minX)||1, h=(maxY-minY)||1, cw=canvas.clientWidth, ch=canvas.clientHeight;
+  const fit=Math.min((cw-80)/w, (ch-80)/h);
+  scale=Math.min(1, Math.max(fit, 0.55));            // never zoom below 55% — a big org must stay readable, you scroll/pan
+  // if the tree is bigger than the screen at this zoom, start at its top-left (the root) instead of centring a tiny blob
+  // horizontal: always flush-left (40px margin) so the hierarchy reads from the edge — no dead band
+  tx = 40 - minX*scale;
+  // vertical: whole tree fits → centre it; tall LR org → open centred on the head (root); tall TB → top-anchor
+  const rp = state.org ? POSITIONS[state.org.id] : null;
+  if(h*scale <= ch-80){ ty = (ch - h*scale)/2 - minY*scale; }
+  else if(ORIENT==='LR' && rp){ ty = ch/2 - (rp.y + NH/2)*scale; }
+  else { ty = 40 - minY*scale; }
+  applyT();
+}
+canvas.addEventListener('mousedown',e=>{ if(e.target.closest('.node,.freebox,.linkbar'))return; if(SELSET.size||SELLINK||SELEDGE){ SELSET.clear(); SELLINK=null; SELEDGE=null; render(); } dragging=true; canvas.classList.add('grabbing'); sx=e.clientX-tx; sy=e.clientY-ty; });
+window.addEventListener('mousemove',e=>{ if(!dragging)return; tx=e.clientX-sx; ty=e.clientY-sy; applyT(); });
+window.addEventListener('mouseup',()=>{ dragging=false; canvas.classList.remove('grabbing'); });
+canvas.addEventListener('wheel',e=>{
+  // An overlay that scrolls must get its own wheel events. The canvas is their parent, so
+  // without this the panel is unscrollable and the board pans underneath instead.
+  if(e.target.closest && e.target.closest('.scrolls')) return;
+  e.preventDefault();
+  if(e.ctrlKey){                       // pinch (trackpad) or Ctrl+wheel → zoom toward cursor
+    const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+    const ns=Math.min(2,Math.max(0.2, scale*Math.exp(-e.deltaY*0.0015)));
+    tx=mx-(mx-tx)*(ns/scale); ty=my-(my-ty)*(ns/scale); scale=ns; applyT();
+  } else {                             // plain scroll / two-finger swipe → pan
+    tx-=e.deltaX; ty-=e.deltaY; applyT();
+  }
+},{passive:false});
+
+/* ---- touch: one finger drags the board, two fingers pinch-zoom ---- */
+let TOUCH=null;
+const _pinch=ts=>{ const [a,b]=ts; return {d:Math.hypot(b.clientX-a.clientX,b.clientY-a.clientY),
+  cx:(a.clientX+b.clientX)/2, cy:(a.clientY+b.clientY)/2}; };
+canvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===1){ const t=e.touches[0]; TOUCH={mode:'pan', ox:t.clientX-tx, oy:t.clientY-ty, moved:false}; }
+  else if(e.touches.length===2){ const p=_pinch(e.touches), r=canvas.getBoundingClientRect();
+    TOUCH={mode:'zoom', d0:p.d||1, s0:scale, mx:p.cx-r.left, my:p.cy-r.top, tx0:tx, ty0:ty, moved:true}; }
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  if(!TOUCH) return; e.preventDefault();
+  if(TOUCH.mode==='pan' && e.touches.length===1){
+    const t=e.touches[0]; tx=t.clientX-TOUCH.ox; ty=t.clientY-TOUCH.oy; TOUCH.moved=true; applyT();
+  } else if(TOUCH.mode==='zoom' && e.touches.length===2){
+    const p=_pinch(e.touches);
+    const ns=Math.min(2,Math.max(0.2, TOUCH.s0*(p.d/TOUCH.d0)));
+    tx=TOUCH.mx-(TOUCH.mx-TOUCH.tx0)*(ns/TOUCH.s0); ty=TOUCH.my-(TOUCH.my-TOUCH.ty0)*(ns/TOUCH.s0);
+    scale=ns; applyT();
+  }
+},{passive:false});
+canvas.addEventListener('touchend',e=>{
+  if(TOUCH && TOUCH.mode==='pan' && TOUCH.moved) e.preventDefault();  // a drag must not fire a tap
+  if(e.touches.length===0) TOUCH=null;
+},{passive:false});
+
+/* ---------------- HELPERS ---------------- */
+function nowISO(){ return new Date().toISOString(); }
+function fmt(iso){ const d=new Date(iso); return d.toLocaleDateString(undefined,{day:'numeric',month:'short'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* Encoder for a value going INSIDE a JS string in an on*="" attribute.
+   esc() is an HTML escaper — it leaves ' untouched, so esc(x) inside '...'
+   lets a quote in x break out of the string and run arbitrary JS. JSON.stringify
+   produces a properly-escaped "..." literal; esc() then makes it attribute-safe. */
+function jsAttr(v){ return esc(JSON.stringify(v==null?'':String(v))); }
+/* Tag/colour keys are a controlled vocabulary: lowercase alphanumerics + dashes. */
+function slugKey(s){ return String(s==null?'':s).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,64); }
+function safeColor(c){ return /^#[0-9a-fA-F]{3,8}$|^[a-zA-Z]{1,30}$/.test(c||'')?c:''; }
+function hexA(hex,a){ if(!hex||hex[0]!=='#') return 'var(--panel)'; const n=parseInt(hex.slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; }
+</script>
+</body>
+</html>

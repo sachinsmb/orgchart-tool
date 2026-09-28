@@ -1,0 +1,60 @@
+# ACME MEP Org Assessment — local dev + DGX Spark stack.
+#
+# Ports are chosen to clear the ~15 services already running on the DGX (8088/8089/8091,
+# 8098/8198, 8030, 8002, 3002/3005, 8770, 11434, 18091, 18789 …). Postgres is deliberately
+# NOT published to the host: nothing outside the compose network needs it, the DGX already
+# has something on 127.0.0.1:5432, and the CB copy published it for no reason.
+#
+# Access is the DGX's Tailscale address on 3412. No tunnel, no DNS — see scripts/deploy.sh.
+# In prod, POSTGRES_PASSWORD / JWT_SECRET / ADMIN_PASSWORD come from .env, never these defaults.
+name: acmeorg
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: acmeorg-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-acme}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-acme}   # override via .env in prod
+      POSTGRES_DB: ${POSTGRES_DB:-acmeorg}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-acme} -d ${POSTGRES_DB:-acmeorg}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: acmeorg-api
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://acme:acme@db:5432/acmeorg}
+      JWT_SECRET: ${JWT_SECRET:-change-me}            # override via .env in prod
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-acmemep}      # seeds the first admin login
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8412:8000"
+    restart: unless-stopped
+
+  # Serves the BUILT frontend (dist/ — html + vendor, one self-contained directory),
+  # never app/frontend/index.html directly.
+  # Locally you can still just open app/frontend/index.html in offline mode.
+  web:
+    image: nginx:alpine
+    container_name: acmeorg-web
+    volumes:
+      - ../../dist:/usr/share/nginx/html:ro
+      - ../frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "3412:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:

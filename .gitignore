@@ -1,0 +1,26 @@
+# ---- secrets: generated on the server, never committed ----
+.env
+.env.*
+!.env.example
+team-logins.txt
+scripts/deploy.env
+
+# ---- client data: lives in Postgres / on the server only ----
+seed/*.json
+seed/build-seed.local.py
+scripts/name-blocklist.txt
+*.sql.gz
+*.dump
+exports/
+progress.md
+
+# ---- build output ----
+dist/
+releases/
+
+# ---- tooling ----
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.DS_Store
