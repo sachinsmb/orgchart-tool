@@ -1,4 +1,4 @@
-# ACME MEP — Org Chart Tool
+# Org Chart Tool
 
 Interactive org-chart web app for building and critiquing a client's organisation structure.
 **Hosted on the DGX Spark — no DigitalOcean, no incremental cost.**
@@ -64,7 +64,7 @@ has seen fire is a guess.
 
 ## Layout
 ```
-acme-orgchart/
+orgchart-tool/
 ├── app/backend/      FastAPI — main.py · db.py · auth.py · models.py · schema.sql · compose
 ├── app/frontend/     index.html (single file, no real people) + vendor/
 ├── dist/             BUILT artifact — html + vendor, one self-contained dir. gitignored
@@ -103,3 +103,15 @@ to-hire. An unset box is an honest box.
   blocked the first seed on an empty instance. Now counts org nodes by walking `.root` → `.reports`.
 - **web container would not start** — `vendor/` was mounted *inside* the read-only `dist` mount.
   `dist/` is now one self-contained directory.
+
+---
+
+## Memory
+
+This project has a **self-evolving memory** (`.memory/`): sessions are captured
+automatically (SessionEnd/PreCompact hooks + a crash-safe sweeper), compiled
+nightly into the wiki at `.memory/knowledge/`, and recalled as a brief injected
+at session start. Rules: [.memory/MEMORY-RULES.md](.memory/MEMORY-RULES.md) —
+binding for any agent writing to `knowledge/`. Deep search: `/recall <question>`.
+Manual compile: `/memory-compile`. Trust the injected MEMORY BRIEF: check known
+gotchas before re-deriving a fix. Only the vetted `knowledge/` bundle is committed.

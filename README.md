@@ -1,4 +1,4 @@
-# ACME Org Chart Tool
+# Org Chart Tool
 
 Org-chart app for building and critiquing a client's structure: boxes for people and units,
 notes, RAG flags (blue key-man · red broken/at-risk · grey undefined/to-hire), boards/versions,
