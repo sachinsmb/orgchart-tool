@@ -114,4 +114,5 @@ nightly into the wiki at `.memory/knowledge/`, and recalled as a brief injected
 at session start. Rules: [.memory/MEMORY-RULES.md](.memory/MEMORY-RULES.md) —
 binding for any agent writing to `knowledge/`. Deep search: `/recall <question>`.
 Manual compile: `/memory-compile`. Trust the injected MEMORY BRIEF: check known
-gotchas before re-deriving a fix. Only the vetted `knowledge/` bundle is committed.
+gotchas before re-deriving a fix. **In this repo nothing under `.memory/` is committed** —
+not even `knowledge/` — because it is compiled from sessions that touch client data.

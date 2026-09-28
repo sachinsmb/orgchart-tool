@@ -24,3 +24,8 @@ __pycache__/
 .venv/
 node_modules/
 .DS_Store
+
+# ---- local KS-Pod memory + Claude hooks: compiled from session transcripts, so they can
+#      carry client names. Never committed in this repo, knowledge/ included. ----
+.memory/
+.claude/
